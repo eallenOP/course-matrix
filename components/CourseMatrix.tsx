@@ -250,7 +250,7 @@ const CourseMatrix = () => {
       <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
       
       {/* Top controls */}
-      <div className="flex justify-between mb-8">
+      <div className="flex justify-between mb-8 items-center">
         <div className="flex gap-4">
           <input
             type="text"
@@ -264,21 +264,24 @@ const CourseMatrix = () => {
             Add Course
           </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setIsEditingTasks(!isEditingTasks)}
-          className="flex items-center gap-2"
-        >
-          <Settings className="w-4 h-4" />
-          {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
-        </Button>
-      </div>
-
-      {/* Reset All Button */}
-      <div className="mb-8">
-        <Button variant="destructive" onClick={resetAllTaskStatuses} className="w-full">
-          Reset All Tasks to Unchecked
-        </Button>
+        <div className="flex gap-4 items-center">
+          <Button
+            variant="outline"
+            onClick={() => setIsEditingTasks(!isEditingTasks)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
+          </Button>
+          {/* Compact reset button */}
+          <Button
+            variant="destructive"
+            onClick={resetAllTaskStatuses}
+            className="flex items-center gap-2 px-4 py-2 text-sm"
+          >
+            Reset Progress
+          </Button>
+        </div>
       </div>
 
       {/* Task editor */}
