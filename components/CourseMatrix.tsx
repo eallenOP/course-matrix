@@ -72,12 +72,13 @@ const CourseMatrix = () => {
     }
   }, [taskStatus]);
 
+  // Reset all check boxes to not done
   const resetAllTaskStatuses = () => {
     const confirmReset = window.confirm("Are you sure you want to reset all tasks to unchecked?");
-  
+
     if (confirmReset) {
       const resetStatus = {};
-  
+
       // Initialize task status for every course, task, and subtask
       courses.forEach(course => {
         Object.keys(tasks).forEach(taskType => {
@@ -86,11 +87,18 @@ const CourseMatrix = () => {
           });
         });
       });
-  
+
       setTaskStatus(resetStatus);
     }
   };
-  
+
+  // Function to remove a course with confirmation
+  const removeCourse = (courseId) => {
+    const confirmRemove = window.confirm("Are you sure you want to remove this course?");
+    if (confirmRemove) {
+      setCourses(courses.filter(course => course.id !== courseId));
+    }
+  };
 
   // Task status can be: undefined/false (incomplete), true (complete), or 'na' (not applicable)
   const toggleStatus = (courseId, taskType, subtask) => {
@@ -183,7 +191,7 @@ const CourseMatrix = () => {
   const calculateTaskProgress = (taskType) => {
     let total = 0;
     let completed = 0;
-    
+
     courses.forEach(course => {
       tasks[taskType].forEach(subtask => {
         const status = taskStatus[`${course.id}-${taskType}-${subtask}`];
@@ -195,7 +203,7 @@ const CourseMatrix = () => {
         }
       });
     });
-    
+
     return total === 0 ? 0 : Math.round((completed / total) * 100);
   };
 
@@ -216,7 +224,7 @@ const CourseMatrix = () => {
   const calculateCourseTaskProgress = (courseId, taskType) => {
     let totalActiveTasks = 0;
     let completedTasks = 0;
-    
+
     tasks[taskType].forEach(subtask => {
       const status = taskStatus[`${courseId}-${taskType}-${subtask}`];
       if (status !== 'na') {
@@ -226,14 +234,14 @@ const CourseMatrix = () => {
         }
       }
     });
-    
+
     return totalActiveTasks === 0 ? 0 : Math.round((completedTasks / totalActiveTasks) * 100);
   };
 
   const calculateCourseProgress = (courseId) => {
     let total = 0;
     let completed = 0;
-    
+
     Object.keys(tasks).forEach(taskType => {
       tasks[taskType].forEach(subtask => {
         const status = taskStatus[`${courseId}-${taskType}-${subtask}`];
@@ -245,14 +253,14 @@ const CourseMatrix = () => {
         }
       });
     });
-    
+
     return total === 0 ? 0 : Math.round((completed / total) * 100);
   };
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
-      
+
       {/* Top controls */}
       <div className="flex justify-between mb-8 items-center">
         <div className="flex gap-4">
@@ -293,7 +301,7 @@ const CourseMatrix = () => {
         <Card className="mb-8">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold mb-4">Edit Tasks</h2>
-            
+
             {/* Add new task type */}
             <div className="flex gap-2 mb-6">
               <input
@@ -330,7 +338,7 @@ const CourseMatrix = () => {
                       value={newSubtask}
                       onChange={(e) => setNewSubtask(e.target.value)}
                     />
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => addSubtask(taskType)}
                     >
@@ -341,8 +349,8 @@ const CourseMatrix = () => {
                   {/* Subtask list */}
                   <div className="space-y-2">
                     {subtasks.map(subtask => (
-                      <div 
-                        key={subtask} 
+                      <div
+                        key={subtask}
                         className="flex justify-between items-center p-2 bg-gray-50 rounded"
                         draggable
                         onDragStart={() => handleDragStart(taskType, subtask)}
@@ -381,9 +389,22 @@ const CourseMatrix = () => {
                     <th className="p-3 border-b text-left w-64">Tasks</th>
                     {courses.map(course => (
                       <th key={course.id} className="p-3 border-b text-center">
-                        <div>{course.code}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {calculateCourseProgress(course.id)}%
+                        <div className="relative">
+                          {/* Course code */}
+                          <div>{course.code}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {calculateCourseProgress(course.id)}%
+                          </div>
+
+                          {/* Remove Button (X) visible on hover */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeCourse(course.id)}
+                            className="absolute top-1 right-1"
+                          >
+                            <X className="w-4 h-4 text-red-300" />
+                          </Button>
                         </div>
                       </th>
                     ))}
@@ -393,7 +414,7 @@ const CourseMatrix = () => {
                   {Object.entries(tasks).map(([taskType, subtasks]) => (
                     <React.Fragment key={taskType}>
                       <tr className="bg-gray-50">
-                        <td 
+                        <td
                           className="p-3 font-medium cursor-pointer hover:bg-gray-100"
                           onClick={() => setExpandedTask(expandedTask === taskType ? null : taskType)}
                         >
@@ -406,8 +427,8 @@ const CourseMatrix = () => {
                         </td>
                         {courses.map(course => (
                           <td key={course.id} className="p-3 text-center border-l">
-                            <Progress 
-                              value={calculateCourseTaskProgress(course.id, taskType)} 
+                            <Progress
+                              value={calculateCourseTaskProgress(course.id, taskType)}
                               className="h-2"
                             />
                           </td>
@@ -417,8 +438,8 @@ const CourseMatrix = () => {
                         <tr key={subtask} className="border-b last:border-b-0">
                           <td className="p-3 pl-6 text-sm">{subtask}</td>
                           {courses.map(course => (
-                            <td 
-                              key={course.id} 
+                            <td
+                              key={course.id}
                               className="p-3 text-center border-l cursor-pointer hover:bg-gray-50"
                               onClick={() => toggleStatus(course.id, taskType, subtask)}
                             >
@@ -439,6 +460,7 @@ const CourseMatrix = () => {
           )}
         </CardContent>
       </Card>
+
 
       {/* Legend */}
       <div className="mt-4 flex gap-6 text-sm text-gray-600">
