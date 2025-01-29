@@ -3,12 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, X, CheckCircle2, Circle, Minus, Plus, GripVertical } from 'lucide-react';
+import { PlusCircle, Settings, X, CheckCircle2, Circle, Minus, GripVertical } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+
+// Types for the course and task data
+interface Course {
+  id: number;
+  code: string;
+}
+
+type TaskStatus = { [key: string]: boolean | 'na' | undefined };
+type Tasks = { [key: string]: string[] }; // Each task type maps to an array of subtasks
 
 const CourseMatrix = () => {
   // Default task types with their subtasks
-  const defaultTasks = {
+  const defaultTasks: Tasks = {
     'Course Directive': [
       'Update year and semester number',
       'Update term dates and holidays',
@@ -28,18 +37,18 @@ const CourseMatrix = () => {
     ]
   };
 
-  // Initialize state
-  const [courses, setCourses] = useState([]);
-  const [tasks, setTasks] = useState(defaultTasks);
-  const [taskStatus, setTaskStatus] = useState({});
-  const [newCourseCode, setNewCourseCode] = useState('');
-  const [expandedTask, setExpandedTask] = useState(null);
-  const [isEditingTasks, setIsEditingTasks] = useState(false);
-  const [newTaskType, setNewTaskType] = useState('');
-  const [newSubtask, setNewSubtask] = useState('');
-  const [editingTaskType, setEditingTaskType] = useState(null);
-  const [draggedSubtask, setDraggedSubtask] = useState(null);
-  const [draggedTaskType, setDraggedTaskType] = useState(null);
+  // Initialize state with types
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [tasks, setTasks] = useState<Tasks>(defaultTasks);
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>({});
+  const [newCourseCode, setNewCourseCode] = useState<string>('');
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [isEditingTasks, setIsEditingTasks] = useState<boolean>(false);
+  const [newTaskType, setNewTaskType] = useState<string>('');
+  const [newSubtask, setNewSubtask] = useState<string>('');
+  const [editingTaskType, setEditingTaskType] = useState<string | null>(null);
+  const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
+  const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if the window object is available (indicating client-side rendering)
@@ -72,12 +81,12 @@ const CourseMatrix = () => {
     }
   }, [taskStatus]);
 
-  // Reset all check boxes to not done
+  // Reset all checkboxes to not done
   const resetAllTaskStatuses = () => {
     const confirmReset = window.confirm("Are you sure you want to reset all tasks to unchecked?");
 
     if (confirmReset) {
-      const resetStatus = {};
+      const resetStatus: TaskStatus = {};
 
       // Initialize task status for every course, task, and subtask
       courses.forEach(course => {
@@ -93,7 +102,7 @@ const CourseMatrix = () => {
   };
 
   // Function to remove a course with confirmation
-  const removeCourse = (courseId) => {
+  const removeCourse = (courseId: number) => {
     const confirmRemove = window.confirm("Are you sure you want to remove this course?");
     if (confirmRemove) {
       setCourses(courses.filter(course => course.id !== courseId));
@@ -101,7 +110,7 @@ const CourseMatrix = () => {
   };
 
   // Task status can be: undefined/false (incomplete), true (complete), or 'na' (not applicable)
-  const toggleStatus = (courseId, taskType, subtask) => {
+  const toggleStatus = (courseId: number, taskType: string, subtask: string) => {
     const key = `${courseId}-${taskType}-${subtask}`;
     setTaskStatus(prev => {
       const currentStatus = prev[key];
@@ -111,18 +120,18 @@ const CourseMatrix = () => {
     });
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: boolean | 'na' | undefined) => {
     if (status === true) return <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />;
     if (status === 'na') return <Minus className="w-5 h-5 text-gray-400 mx-auto" />;
     return <Circle className="w-5 h-5 text-gray-300 mx-auto" />;
   };
 
-  const handleDragStart = (taskType, subtask) => {
+  const handleDragStart = (taskType: string, subtask: string) => {
     setDraggedSubtask(subtask);
     setDraggedTaskType(taskType);
   };
 
-  const handleDragOver = (e, taskType, targetSubtask) => {
+  const handleDragOver = (e: React.DragEvent, taskType: string, targetSubtask: string) => {
     e.preventDefault();
     if (!draggedSubtask || draggedTaskType !== taskType) return;
 
@@ -165,7 +174,7 @@ const CourseMatrix = () => {
     }
   };
 
-  const addSubtask = (taskType) => {
+  const addSubtask = (taskType: string) => {
     if (newSubtask) {
       setTasks(prev => ({
         ...prev,
@@ -175,12 +184,12 @@ const CourseMatrix = () => {
     }
   };
 
-  const removeTaskType = (taskType) => {
+  const removeTaskType = (taskType: string) => {
     const { [taskType]: removed, ...rest } = tasks;
     setTasks(rest);
   };
 
-  const removeSubtask = (taskType, subtask) => {
+  const removeSubtask = (taskType: string, subtask: string) => {
     setTasks(prev => ({
       ...prev,
       [taskType]: prev[taskType].filter(t => t !== subtask)
@@ -188,7 +197,7 @@ const CourseMatrix = () => {
   };
 
   // Calculate progress (excluding N/A tasks)
-  const calculateTaskProgress = (taskType) => {
+  const calculateTaskProgress = (taskType: string) => {
     let total = 0;
     let completed = 0;
 
@@ -207,21 +216,8 @@ const CourseMatrix = () => {
     return total === 0 ? 0 : Math.round((completed / total) * 100);
   };
 
-  // Save state changes to localStorage
-  useEffect(() => {
-    localStorage.setItem('courseMatrix_courses', JSON.stringify(courses));
-  }, [courses]);
-
-  useEffect(() => {
-    localStorage.setItem('courseMatrix_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('courseMatrix_taskStatus', JSON.stringify(taskStatus));
-  }, [taskStatus]);
-
   // Calculate progress for a specific task type in a specific course
-  const calculateCourseTaskProgress = (courseId, taskType) => {
+  const calculateCourseTaskProgress = (courseId: number, taskType: string) => {
     let totalActiveTasks = 0;
     let completedTasks = 0;
 
@@ -238,7 +234,7 @@ const CourseMatrix = () => {
     return totalActiveTasks === 0 ? 0 : Math.round((completedTasks / totalActiveTasks) * 100);
   };
 
-  const calculateCourseProgress = (courseId) => {
+  const calculateCourseProgress = (courseId: number) => {
     let total = 0;
     let completed = 0;
 
