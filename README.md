@@ -1,3 +1,9 @@
+# Course Preparation Matrix
+
+This is a small project made using Claude.ai artefacts with some help from ChatGPT. Feel free to fork it, remix it, distribute it or follow the link to the live version and use it.
+
+If you have an improvement you want to share please go ahead and submit a PR. Could be a new feature, a test suite or a bug fix, or whatever.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
