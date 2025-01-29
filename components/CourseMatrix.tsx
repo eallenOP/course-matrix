@@ -10,21 +10,20 @@ const CourseMatrix = () => {
   // Default task types with their subtasks
   const defaultTasks = {
     'Course Directive': [
-      'Update learning outcomes',
-      'Review assessment criteria',
-      'Update required readings',
-      'Check prerequisites'
+      'Update year and semester number',
+      'Update term dates and holidays',
+      'Save to moderation folder',
+      'Upload to course materials'
     ],
-    'Course Schedule': [
-      'Set lecture times',
-      'Schedule labs',
-      'Add assignment deadlines',
-      'Mark exam dates'
+    'Moodle': [
+      'Update schedule',
+      'Check assignment deadlines',
+      'Add students'
     ],
-    'Student Setup': [
-      'Import student list',
-      'Create Moodle groups',
-      'Send welcome email',
+    'Teams Setup': [
+      'Create class channel',
+      'Add students',
+      'Send welcome message',
       'Setup TAs'
     ]
   };
