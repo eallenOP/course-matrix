@@ -73,6 +73,21 @@ const CourseMatrix = () => {
     }
   }, [taskStatus]);
 
+  const resetAllTaskStatuses = () => {
+    const resetStatus = {};
+
+    // Initialize task status for every course, task, and subtask
+    courses.forEach(course => {
+      Object.keys(tasks).forEach(taskType => {
+        tasks[taskType].forEach(subtask => {
+          resetStatus[`${course.id}-${taskType}-${subtask}`] = false;
+        });
+      });
+    });
+
+    setTaskStatus(resetStatus);
+  };
+
   // Task status can be: undefined/false (incomplete), true (complete), or 'na' (not applicable)
   const toggleStatus = (courseId, taskType, subtask) => {
     const key = `${courseId}-${taskType}-${subtask}`;
@@ -256,6 +271,13 @@ const CourseMatrix = () => {
         >
           <Settings className="w-4 h-4" />
           {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
+        </Button>
+      </div>
+
+      {/* Reset All Button */}
+      <div className="mb-8">
+        <Button variant="destructive" onClick={resetAllTaskStatuses} className="w-full">
+          Reset All Tasks to Unchecked
         </Button>
       </div>
 
