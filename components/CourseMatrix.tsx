@@ -49,6 +49,7 @@ const CourseMatrix = () => {
   const [editingTaskType, setEditingTaskType] = useState<string | null>(null);
   const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
   const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
+  const [hoveredCourse, setHoveredCourse] = useState<number | null>(null);
 
   useEffect(() => {
     // Check if the window object is available (indicating client-side rendering)
@@ -384,23 +385,31 @@ const CourseMatrix = () => {
                   <tr>
                     <th className="p-3 border-b text-left w-64">Tasks</th>
                     {courses.map(course => (
-                      <th key={course.id} className="p-3 border-b text-center">
-                        <div className="relative">
+                      <th 
+                        key={course.id} 
+                        className="p-3 border-b text-center relative"
+                        onMouseEnter={() => setHoveredCourse(course.id)}
+                        onMouseLeave={() => setHoveredCourse(null)}
+                      >
+                        <div className="relative px-4 py-1">
                           {/* Course code */}
-                          <div>{course.code}</div>
+                          <div className="pr-6">{course.code}</div>
                           <div className="text-xs text-gray-500 mt-1">
                             {calculateCourseProgress(course.id)}%
                           </div>
 
-                          {/* Remove Button (X) visible on hover */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCourse(course.id)}
-                            className="absolute top-1 right-1"
-                          >
-                            <X className="w-4 h-4 text-red-300" />
-                          </Button>
+                          {/* Remove Button (X) visible only on hover */}
+                          {hoveredCourse === course.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeCourse(course.id)}
+                              className="absolute top-0 right-0 p-1 h-auto text-red-400 hover:text-red-600 hover:bg-transparent"
+                              aria-label={`Remove ${course.code}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </th>
                     ))}
@@ -456,7 +465,6 @@ const CourseMatrix = () => {
           )}
         </CardContent>
       </Card>
-
 
       {/* Legend */}
       <div className="mt-4 flex gap-6 text-sm text-gray-600">
