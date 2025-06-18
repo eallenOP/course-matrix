@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, X, CheckCircle2, Circle, Minus, GripVertical } from 'lucide-react';
+import { PlusCircle, Settings, X, CheckCircle2, Circle, Minus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import TaskEditor from './TaskEditor';
 
 // Types for the course and task data
 interface Course {
@@ -44,11 +45,6 @@ const CourseMatrix = () => {
   const [newCourseCode, setNewCourseCode] = useState<string>('');
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [isEditingTasks, setIsEditingTasks] = useState<boolean>(false);
-  const [newTaskType, setNewTaskType] = useState<string>('');
-  const [newSubtask, setNewSubtask] = useState<string>('');
-  const [editingTaskType, setEditingTaskType] = useState<string | null>(null);
-  const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
-  const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
   const [hoveredCourse, setHoveredCourse] = useState<number | null>(null);
 
   useEffect(() => {
@@ -127,74 +123,12 @@ const CourseMatrix = () => {
     return <Circle className="w-5 h-5 text-gray-300 mx-auto" />;
   };
 
-  const handleDragStart = (taskType: string, subtask: string) => {
-    setDraggedSubtask(subtask);
-    setDraggedTaskType(taskType);
-  };
-
-  const handleDragOver = (e: React.DragEvent, taskType: string, targetSubtask: string) => {
-    e.preventDefault();
-    if (!draggedSubtask || draggedTaskType !== taskType) return;
-
-    const subtaskList = [...tasks[taskType]];
-    const draggedIndex = subtaskList.indexOf(draggedSubtask);
-    const targetIndex = subtaskList.indexOf(targetSubtask);
-
-    if (draggedIndex === targetIndex) return;
-
-    subtaskList.splice(draggedIndex, 1);
-    subtaskList.splice(targetIndex, 0, draggedSubtask);
-
-    setTasks(prev => ({
-      ...prev,
-      [taskType]: subtaskList
-    }));
-  };
-
-  const handleDragEnd = () => {
-    setDraggedSubtask(null);
-    setDraggedTaskType(null);
-  };
-
   // Add new course
   const addCourse = () => {
     if (newCourseCode) {
       setCourses([...courses, { id: Date.now(), code: newCourseCode }]);
       setNewCourseCode('');
     }
-  };
-
-  // Task management
-  const addTaskType = () => {
-    if (newTaskType) {
-      setTasks(prev => ({
-        ...prev,
-        [newTaskType]: []
-      }));
-      setNewTaskType('');
-    }
-  };
-
-  const addSubtask = (taskType: string) => {
-    if (newSubtask) {
-      setTasks(prev => ({
-        ...prev,
-        [taskType]: [...prev[taskType], newSubtask]
-      }));
-      setNewSubtask('');
-    }
-  };
-
-  const removeTaskType = (taskType: string) => {
-    const { [taskType]: removed, ...rest } = tasks;
-    setTasks(rest);
-  };
-
-  const removeSubtask = (taskType: string, subtask: string) => {
-    setTasks(prev => ({
-      ...prev,
-      [taskType]: prev[taskType].filter(t => t !== subtask)
-    }));
   };
 
   // Calculate progress (excluding N/A tasks)
@@ -294,86 +228,11 @@ const CourseMatrix = () => {
       </div>
 
       {/* Task editor */}
-      {isEditingTasks && (
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Edit Tasks</h2>
-
-            {/* Add new task type */}
-            <div className="flex gap-2 mb-6">
-              <input
-                type="text"
-                placeholder="New Task Type"
-                className="border p-2 rounded flex-grow"
-                value={newTaskType}
-                onChange={(e) => setNewTaskType(e.target.value)}
-              />
-              <Button onClick={addTaskType}>Add Task Type</Button>
-            </div>
-
-            {/* Edit existing tasks */}
-            <div className="space-y-4">
-              {Object.entries(tasks).map(([taskType, subtasks]) => (
-                <div key={taskType} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium">{taskType}</h3>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeTaskType(taskType)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-
-                  {/* Add subtask */}
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      placeholder="New Subtask"
-                      className="border p-2 rounded flex-grow"
-                      value={newSubtask}
-                      onChange={(e) => setNewSubtask(e.target.value)}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => addSubtask(taskType)}
-                    >
-                      Add
-                    </Button>
-                  </div>
-
-                  {/* Subtask list */}
-                  <div className="space-y-2">
-                    {subtasks.map(subtask => (
-                      <div
-                        key={subtask}
-                        className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                        draggable
-                        onDragStart={() => handleDragStart(taskType, subtask)}
-                        onDragOver={(e) => handleDragOver(e, taskType, subtask)}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <div className="flex items-center gap-2">
-                          <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
-                          <span>{subtask}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSubtask(taskType, subtask)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <TaskEditor
+        tasks={tasks}
+        onTasksChange={setTasks}
+        isVisible={isEditingTasks}
+      />
 
       {/* Matrix */}
       <Card>
