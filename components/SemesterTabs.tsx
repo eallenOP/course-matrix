@@ -1,6 +1,5 @@
 import React from 'react';
-
-export type SemesterType = 'start' | 'end';
+import { SemesterType } from '../types/course';
 
 interface SemesterTabsProps {
   activeSemester: SemesterType;

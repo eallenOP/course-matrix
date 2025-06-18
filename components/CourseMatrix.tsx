@@ -5,11 +5,11 @@ import TaskEditor from './TaskEditor';
 import MatrixTable from './MatrixTable';
 import TopControls from './TopControls';
 import Legend from './Legend';
-import SemesterTabs, { SemesterType } from './SemesterTabs';
-import { useCourseMatrixPersistence } from '../hooks/useLocalStoragePersistence';
+import SemesterTabs from './SemesterTabs';
+import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { progressCalculations } from '../utils/progressCalculations';
 import { resetTaskStatuses } from '../utils/taskActions';
-import { Course, Tasks } from '../types/course';
+import { Course, Tasks, SemesterType } from '../types/course';
 
 const CourseMatrix = () => {
   // Default task types with their subtasks for start of semester
@@ -47,12 +47,17 @@ const CourseMatrix = () => {
     ]
   };
 
-  // Semester selection state
-  const [activeSemester, setActiveSemester] = useState<SemesterType>('start');
-
-  // Use custom hook for localStorage persistence (currently using start tasks)
-  const { courses, tasks, taskStatus, setCourses, setTasks, setTaskStatus } = 
-    useCourseMatrixPersistence(defaultStartTasks);
+  // Use enhanced semester-aware persistence hook
+  const { 
+    activeSemester, 
+    setActiveSemester,
+    courses, 
+    tasks, 
+    taskStatus, 
+    setCourses, 
+    setTasks, 
+    setTaskStatus 
+  } = useSemesterPersistence(defaultStartTasks, defaultEndTasks);
 
   // Local UI state
   const [newCourseCode, setNewCourseCode] = useState<string>('');
@@ -64,14 +69,14 @@ const CourseMatrix = () => {
   const removeCourse = (courseId: number) => {
     const confirmRemove = window.confirm("Are you sure you want to remove this course?");
     if (confirmRemove) {
-      setCourses(courses.filter(course => course.id !== courseId));
+      setCourses(courses.filter((course: Course) => course.id !== courseId));
     }
   };
 
   // Task status can be: undefined/false (incomplete), true (complete), or 'na' (not applicable)
   const toggleStatus = (courseId: number, taskType: string, subtask: string) => {
     const key = `${courseId}-${taskType}-${subtask}`;
-    setTaskStatus(prev => {
+    setTaskStatus((prev) => {
       const currentStatus = prev[key];
       if (currentStatus === undefined || currentStatus === false) return { ...prev, [key]: true };
       if (currentStatus === true) return { ...prev, [key]: 'na' };
@@ -101,15 +106,6 @@ const CourseMatrix = () => {
         activeSemester={activeSemester}
         onSemesterChange={setActiveSemester}
       />
-
-      {/* Temporary indicator - will be removed in next phase */}
-      {activeSemester === 'end' && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-blue-800 text-sm">
-            🚧 End of semester view - Coming soon! Currently showing start-of-semester data.
-          </p>
-        </div>
-      )}
 
       {/* Top controls */}
       <TopControls

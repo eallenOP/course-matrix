@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import SemesterTabs, { SemesterType } from '../components/SemesterTabs';
+import SemesterTabs from '../components/SemesterTabs';
+import { SemesterType } from '../types/course';
 
 describe('SemesterTabs', () => {
   const defaultProps = {
