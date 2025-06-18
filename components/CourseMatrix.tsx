@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, X, CheckCircle2, Circle, Minus } from 'lucide-react';
+import { PlusCircle, Settings, CheckCircle2, Circle, Minus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import TaskEditor from './TaskEditor';
+import MatrixTable from './MatrixTable';
 
 // Types for the course and task data
 interface Course {
@@ -115,12 +116,6 @@ const CourseMatrix = () => {
       if (currentStatus === true) return { ...prev, [key]: 'na' };
       return { ...prev, [key]: false };
     });
-  };
-
-  const getStatusIcon = (status: boolean | 'na' | undefined) => {
-    if (status === true) return <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />;
-    if (status === 'na') return <Minus className="w-5 h-5 text-gray-400 mx-auto" />;
-    return <Circle className="w-5 h-5 text-gray-300 mx-auto" />;
   };
 
   // Add new course
@@ -235,99 +230,20 @@ const CourseMatrix = () => {
       />
 
       {/* Matrix */}
-      <Card>
-        <CardContent className="p-6">
-          {courses.length > 0 ? (
-            <div className="relative overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="p-3 border-b text-left w-64">Tasks</th>
-                    {courses.map(course => (
-                      <th 
-                        key={course.id} 
-                        className="p-3 border-b text-center relative"
-                        onMouseEnter={() => setHoveredCourse(course.id)}
-                        onMouseLeave={() => setHoveredCourse(null)}
-                      >
-                        <div className="grid grid-cols-[1fr_auto] items-center">
-                          <div className="col-span-2 text-center mb-1">
-                            {course.code}
-                          </div>
-                          <div className="col-span-2 text-xs text-gray-500 text-center">
-                            {calculateCourseProgress(course.id)}%
-                          </div>
-                          
-                          {/* Positioned X button in the corner */}
-                          {hoveredCourse === course.id && (
-                            <div className="absolute top-2 right-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeCourse(course.id);
-                                }}
-                                className="p-1 h-5 w-5 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
-                                aria-label={`Remove ${course.code}`}
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(tasks).map(([taskType, subtasks]) => (
-                    <React.Fragment key={taskType}>
-                      <tr className="bg-gray-50">
-                        <td
-                          className="p-3 font-medium cursor-pointer hover:bg-gray-100"
-                          onClick={() => setExpandedTask(expandedTask === taskType ? null : taskType)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span>{taskType}</span>
-                            <span className="text-sm text-gray-500">
-                              {calculateTaskProgress(taskType)}%
-                            </span>
-                          </div>
-                        </td>
-                        {courses.map(course => (
-                          <td key={course.id} className="p-3 text-center border-l">
-                            <Progress
-                              value={calculateCourseTaskProgress(course.id, taskType)}
-                              className="h-2"
-                            />
-                          </td>
-                        ))}
-                      </tr>
-                      {expandedTask === taskType && subtasks.map(subtask => (
-                        <tr key={subtask} className="border-b last:border-b-0">
-                          <td className="p-3 pl-6 text-sm">{subtask}</td>
-                          {courses.map(course => (
-                            <td
-                              key={course.id}
-                              className="p-3 text-center border-l cursor-pointer hover:bg-gray-50"
-                              onClick={() => toggleStatus(course.id, taskType, subtask)}
-                            >
-                              {getStatusIcon(taskStatus[`${course.id}-${taskType}-${subtask}`])}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              Add courses to begin tracking your preparation tasks
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <MatrixTable
+        courses={courses}
+        tasks={tasks}
+        taskStatus={taskStatus}
+        expandedTask={expandedTask}
+        hoveredCourse={hoveredCourse}
+        onExpandTask={setExpandedTask}
+        onRemoveCourse={removeCourse}
+        onToggleStatus={toggleStatus}
+        onCourseHover={setHoveredCourse}
+        calculateTaskProgress={calculateTaskProgress}
+        calculateCourseTaskProgress={calculateCourseTaskProgress}
+        calculateCourseProgress={calculateCourseProgress}
+      />
 
       {/* Legend */}
       <div className="mt-4 flex gap-6 text-sm text-gray-600">
