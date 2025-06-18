@@ -4,15 +4,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { X, CheckCircle2, Circle, Minus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-
-// Types
-interface Course {
-  id: number;
-  code: string;
-}
-
-type TaskStatus = { [key: string]: boolean | 'na' | undefined };
-type Tasks = { [key: string]: string[] };
+import { Course, TaskStatus, Tasks } from '../types/course';
 
 interface MatrixTableProps {
   courses: Course[];

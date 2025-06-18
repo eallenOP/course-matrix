@@ -4,9 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, GripVertical } from 'lucide-react';
-
-// Types
-type Tasks = { [key: string]: string[] };
+import { Tasks } from '../types/course';
 
 interface TaskEditorProps {
   tasks: Tasks;
