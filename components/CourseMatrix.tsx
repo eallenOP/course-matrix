@@ -49,6 +49,7 @@ const CourseMatrix = () => {
   const [editingTaskType, setEditingTaskType] = useState<string | null>(null);
   const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
   const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
+  const [hoveredCourse, setHoveredCourse] = useState<number | null>(null);
 
   useEffect(() => {
     // Check if the window object is available (indicating client-side rendering)
@@ -384,23 +385,35 @@ const CourseMatrix = () => {
                   <tr>
                     <th className="p-3 border-b text-left w-64">Tasks</th>
                     {courses.map(course => (
-                      <th key={course.id} className="p-3 border-b text-center">
-                        <div className="relative">
-                          {/* Course code */}
-                          <div>{course.code}</div>
-                          <div className="text-xs text-gray-500 mt-1">
+                      <th 
+                        key={course.id} 
+                        className="p-3 border-b text-center relative"
+                        onMouseEnter={() => setHoveredCourse(course.id)}
+                        onMouseLeave={() => setHoveredCourse(null)}
+                      >
+                        <div className="grid grid-cols-[1fr_auto] items-center">
+                          <div className="col-span-2 text-center mb-1">
+                            {course.code}
+                          </div>
+                          <div className="col-span-2 text-xs text-gray-500 text-center">
                             {calculateCourseProgress(course.id)}%
                           </div>
-
-                          {/* Remove Button (X) visible on hover */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCourse(course.id)}
-                            className="absolute top-1 right-1"
-                          >
-                            <X className="w-4 h-4 text-red-300" />
-                          </Button>
+                          
+                          {/* Positioned X button in the corner */}
+                          {hoveredCourse === course.id && (
+                            <div className="absolute top-2 right-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeCourse(course.id);
+                                }}
+                                className="p-1 h-5 w-5 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                                aria-label={`Remove ${course.code}`}
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </th>
                     ))}
@@ -456,7 +469,6 @@ const CourseMatrix = () => {
           )}
         </CardContent>
       </Card>
-
 
       {/* Legend */}
       <div className="mt-4 flex gap-6 text-sm text-gray-600">
