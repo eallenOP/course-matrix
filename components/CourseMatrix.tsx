@@ -5,14 +5,15 @@ import TaskEditor from './TaskEditor';
 import MatrixTable from './MatrixTable';
 import TopControls from './TopControls';
 import Legend from './Legend';
+import SemesterTabs, { SemesterType } from './SemesterTabs';
 import { useCourseMatrixPersistence } from '../hooks/useLocalStoragePersistence';
 import { progressCalculations } from '../utils/progressCalculations';
 import { resetTaskStatuses } from '../utils/taskActions';
 import { Course, Tasks } from '../types/course';
 
 const CourseMatrix = () => {
-  // Default task types with their subtasks
-  const defaultTasks: Tasks = {
+  // Default task types with their subtasks for start of semester
+  const defaultStartTasks: Tasks = {
     'Course Directive': [
       'Update year and semester number',
       'Update term dates and holidays',
@@ -32,9 +33,26 @@ const CourseMatrix = () => {
     ]
   };
 
-  // Use custom hook for localStorage persistence
+  // Default task types for end of semester (placeholder for now)
+  const defaultEndTasks: Tasks = {
+    'Final Grades': [
+      'Calculate final grades',
+      'Submit grades to registrar',
+      'Archive course materials'
+    ],
+    'Course Evaluation': [
+      'Review student feedback',
+      'Complete teaching reflection',
+      'Update course for next semester'
+    ]
+  };
+
+  // Semester selection state
+  const [activeSemester, setActiveSemester] = useState<SemesterType>('start');
+
+  // Use custom hook for localStorage persistence (currently using start tasks)
   const { courses, tasks, taskStatus, setCourses, setTasks, setTaskStatus } = 
-    useCourseMatrixPersistence(defaultTasks);
+    useCourseMatrixPersistence(defaultStartTasks);
 
   // Local UI state
   const [newCourseCode, setNewCourseCode] = useState<string>('');
@@ -77,6 +95,21 @@ const CourseMatrix = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
+
+      {/* Semester tabs */}
+      <SemesterTabs
+        activeSemester={activeSemester}
+        onSemesterChange={setActiveSemester}
+      />
+
+      {/* Temporary indicator - will be removed in next phase */}
+      {activeSemester === 'end' && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 text-sm">
+            🚧 End of semester view - Coming soon! Currently showing start-of-semester data.
+          </p>
+        </div>
+      )}
 
       {/* Top controls */}
       <TopControls
