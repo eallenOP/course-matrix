@@ -7,58 +7,55 @@ export function useSemesterPersistence(
   defaultEndTasks: Tasks
 ) {
   const [activeSemester, setActiveSemester] = useState<SemesterType>('start');
-  const [startSemesterData, setStartSemesterData] = useState<SemesterData>({
-    courses: [],
-    tasks: defaultStartTasks,
-    taskStatus: {}
-  });
-  const [endSemesterData, setEndSemesterData] = useState<SemesterData>({
-    courses: [],
-    tasks: defaultEndTasks,
-    taskStatus: {}
-  });
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data from localStorage on mount
+  // Separate state for each semester
+  const [startCourses, setStartCourses] = useState<Course[]>([]);
+  const [startTasks, setStartTasks] = useState<Tasks>(defaultStartTasks);
+  const [startTaskStatus, setStartTaskStatus] = useState<TaskStatus>({});
+
+  const [endCourses, setEndCourses] = useState<Course[]>([]);
+  const [endTasks, setEndTasks] = useState<Tasks>(defaultEndTasks);
+  const [endTaskStatus, setEndTaskStatus] = useState<TaskStatus>({});
+
+  // Load data from localStorage on mount (only once)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        // Load active semester preference
+        // Load active semester
         const savedActiveSemester = localStorage.getItem('courseMatrix_activeSemester');
         if (savedActiveSemester && (savedActiveSemester === 'start' || savedActiveSemester === 'end')) {
-          setActiveSemester(savedActiveSemester);
+          setActiveSemester(savedActiveSemester as SemesterType);
         }
 
         // Load start semester data
         const savedStartData = localStorage.getItem('courseMatrix_startSemester');
         if (savedStartData) {
           const parsedStartData = JSON.parse(savedStartData);
-          setStartSemesterData({
-            courses: parsedStartData.courses || [],
-            tasks: parsedStartData.tasks || defaultStartTasks,
-            taskStatus: parsedStartData.taskStatus || {}
-          });
+          setStartCourses(parsedStartData.courses || []);
+          setStartTasks(parsedStartData.tasks || defaultStartTasks);
+          setStartTaskStatus(parsedStartData.taskStatus || {});
         }
 
         // Load end semester data
         const savedEndData = localStorage.getItem('courseMatrix_endSemester');
         if (savedEndData) {
           const parsedEndData = JSON.parse(savedEndData);
-          setEndSemesterData({
-            courses: parsedEndData.courses || [],
-            tasks: parsedEndData.tasks || defaultEndTasks,
-            taskStatus: parsedEndData.taskStatus || {}
-          });
+          setEndCourses(parsedEndData.courses || []);
+          setEndTasks(parsedEndData.tasks || defaultEndTasks);
+          setEndTaskStatus(parsedEndData.taskStatus || {});
         }
       } catch (error) {
-        console.warn('Failed to load semester data from localStorage:', error);
+        console.warn('Failed to load data from localStorage:', error);
       } finally {
         setIsInitialized(true);
       }
+    } else {
+      setIsInitialized(true);
     }
-  }, [defaultStartTasks, defaultEndTasks]);
+  }, []); // Empty dependency array - only run once!
 
-  // Save data to localStorage when it changes
+  // Save active semester when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
       try {
@@ -69,73 +66,76 @@ export function useSemesterPersistence(
     }
   }, [activeSemester, isInitialized]);
 
+  // Save start semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
       try {
-        localStorage.setItem('courseMatrix_startSemester', JSON.stringify(startSemesterData));
+        const startData = {
+          courses: startCourses,
+          tasks: startTasks,
+          taskStatus: startTaskStatus
+        };
+        localStorage.setItem('courseMatrix_startSemester', JSON.stringify(startData));
       } catch (error) {
         console.warn('Failed to save start semester data to localStorage:', error);
       }
     }
-  }, [startSemesterData, isInitialized]);
+  }, [startCourses, startTasks, startTaskStatus, isInitialized]);
 
+  // Save end semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
       try {
-        localStorage.setItem('courseMatrix_endSemester', JSON.stringify(endSemesterData));
+        const endData = {
+          courses: endCourses,
+          tasks: endTasks,
+          taskStatus: endTaskStatus
+        };
+        localStorage.setItem('courseMatrix_endSemester', JSON.stringify(endData));
       } catch (error) {
         console.warn('Failed to save end semester data to localStorage:', error);
       }
     }
-  }, [endSemesterData, isInitialized]);
+  }, [endCourses, endTasks, endTaskStatus, isInitialized]);
+
+  // Helper functions to update semester data
+  const updateCourses = (courses: Course[]) => {
+    if (activeSemester === 'start') {
+      setStartCourses(courses);
+    } else {
+      setEndCourses(courses);
+    }
+  };
+
+  const updateTasks = (tasks: Tasks) => {
+    if (activeSemester === 'start') {
+      setStartTasks(tasks);
+    } else {
+      setEndTasks(tasks);
+    }
+  };
+
+  const updateTaskStatus = (taskStatus: TaskStatus | ((prev: TaskStatus) => TaskStatus)) => {
+    if (activeSemester === 'start') {
+      setStartTaskStatus(taskStatus);
+    } else {
+      setEndTaskStatus(taskStatus);
+    }
+  };
 
   // Get current semester data
-  const currentSemesterData = activeSemester === 'start' ? startSemesterData : endSemesterData;
-
-  // Update functions for current semester
-  const updateCurrentSemesterData = (updates: Partial<SemesterData>) => {
-    if (activeSemester === 'start') {
-      setStartSemesterData(prev => ({ ...prev, ...updates }));
-    } else {
-      setEndSemesterData(prev => ({ ...prev, ...updates }));
-    }
-  };
-
-  const setCourses = (courses: Course[]) => {
-    updateCurrentSemesterData({ courses });
-  };
-
-  const setTasks = (tasks: Tasks) => {
-    updateCurrentSemesterData({ tasks });
-  };
-
-  const setTaskStatus = (taskStatus: TaskStatus | ((prev: TaskStatus) => TaskStatus)) => {
-    if (typeof taskStatus === 'function') {
-      const currentTaskStatus = currentSemesterData.taskStatus;
-      const newTaskStatus = taskStatus(currentTaskStatus);
-      updateCurrentSemesterData({ taskStatus: newTaskStatus });
-    } else {
-      updateCurrentSemesterData({ taskStatus });
-    }
-  };
+  const currentData = activeSemester === 'start' 
+    ? { courses: startCourses, tasks: startTasks, taskStatus: startTaskStatus }
+    : { courses: endCourses, tasks: endTasks, taskStatus: endTaskStatus };
 
   return {
-    // Current semester data
     activeSemester,
     setActiveSemester,
-    courses: currentSemesterData.courses,
-    tasks: currentSemesterData.tasks,
-    taskStatus: currentSemesterData.taskStatus,
-    
-    // Update functions
-    setCourses,
-    setTasks,
-    setTaskStatus,
-    
-    // Raw semester data (for debugging or advanced use)
-    startSemesterData,
-    endSemesterData,
-    setStartSemesterData,
-    setEndSemesterData
+    courses: currentData.courses,
+    tasks: currentData.tasks,
+    taskStatus: currentData.taskStatus,
+    setCourses: updateCourses,
+    setTasks: updateTasks,
+    setTaskStatus: updateTaskStatus,
   };
 }
