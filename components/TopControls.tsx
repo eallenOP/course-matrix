@@ -19,6 +19,12 @@ const TopControls: React.FC<TopControlsProps> = ({
   onToggleEditTasks,
   onResetProgress
 }) => {
+  const handleCourseCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onAddCourse();
+    }
+  };
+
   return (
     <div className="flex justify-between mb-8 items-center">
       <div className="flex gap-4">
@@ -28,6 +34,7 @@ const TopControls: React.FC<TopControlsProps> = ({
           className="border p-2 rounded"
           value={newCourseCode}
           onChange={(e) => onNewCourseCodeChange(e.target.value)}
+          onKeyDown={handleCourseCodeKeyPress}
         />
         <Button onClick={onAddCourse} className="flex items-center gap-2">
           <PlusCircle className="w-4 h-4" />

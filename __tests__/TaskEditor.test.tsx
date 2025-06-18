@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TaskEditor from '../components/TaskEditor';
 
@@ -238,5 +238,72 @@ describe('TaskEditor', () => {
     
     // Make sure the values didn't interfere with each other
     expect(subtaskInputs[0].value).not.toBe(subtaskInputs[1].value);
+  });
+
+  it('should add a task type when Enter key is pressed in task type input', async () => {
+    render(
+      <TaskEditor
+        tasks={mockTasks}
+        onTasksChange={mockOnTasksChange}
+        isVisible={true}
+      />
+    );
+
+    const taskTypeInput = screen.getByPlaceholderText('New Task Type');
+    
+    fireEvent.change(taskTypeInput, { target: { value: 'Keyboard Task' } });
+    fireEvent.keyDown(taskTypeInput, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(mockOnTasksChange).toHaveBeenCalledWith({
+        ...mockTasks,
+        'Keyboard Task': []
+      });
+    });
+  });
+
+  it('should add a subtask when Enter key is pressed in subtask input', async () => {
+    render(
+      <TaskEditor
+        tasks={mockTasks}
+        onTasksChange={mockOnTasksChange}
+        isVisible={true}
+      />
+    );
+
+    // Find the first subtask input (for Course Setup)
+    const subtaskInputs = screen.getAllByPlaceholderText('New Subtask');
+    const firstSubtaskInput = subtaskInputs[0];
+    
+    fireEvent.change(firstSubtaskInput, { target: { value: 'Keyboard Subtask' } });
+    fireEvent.keyDown(firstSubtaskInput, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(mockOnTasksChange).toHaveBeenCalledWith({
+        ...mockTasks,
+        'Course Setup': [...mockTasks['Course Setup'], 'Keyboard Subtask']
+      });
+    });
+  });
+
+  it('should not trigger actions when non-Enter keys are pressed', () => {
+    render(
+      <TaskEditor
+        tasks={mockTasks}
+        onTasksChange={mockOnTasksChange}
+        isVisible={true}
+      />
+    );
+
+    const taskTypeInput = screen.getByPlaceholderText('New Task Type');
+    const subtaskInputs = screen.getAllByPlaceholderText('New Subtask');
+    
+    // Test various keys that should NOT trigger actions
+    ['Space', 'Tab', 'Escape', 'ArrowDown', 'Backspace'].forEach(key => {
+      fireEvent.keyDown(taskTypeInput, { key });
+      fireEvent.keyDown(subtaskInputs[0], { key });
+    });
+
+    expect(mockOnTasksChange).not.toHaveBeenCalled();
   });
 });

@@ -123,4 +123,24 @@ describe('TopControls', () => {
     const container = screen.getByText('Add Course').closest('div');
     expect(container?.parentElement).toHaveClass('flex', 'justify-between', 'mb-8', 'items-center');
   });
+
+  it('should call onAddCourse when Enter key is pressed in course code input', () => {
+    render(<TopControls {...defaultProps} />);
+    
+    const input = screen.getByPlaceholderText('Course Code');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    
+    expect(defaultProps.onAddCourse).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call onAddCourse when other keys are pressed in course code input', () => {
+    render(<TopControls {...defaultProps} />);
+    
+    const input = screen.getByPlaceholderText('Course Code');
+    fireEvent.keyDown(input, { key: 'Space' });
+    fireEvent.keyDown(input, { key: 'Tab' });
+    fireEvent.keyDown(input, { key: 'Escape' });
+    
+    expect(defaultProps.onAddCourse).not.toHaveBeenCalled();
+  });
 });

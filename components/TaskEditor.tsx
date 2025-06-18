@@ -23,6 +23,18 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
     setDraggedTaskType(taskType);
   };
 
+  const handleTaskTypeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      addTaskType();
+    }
+  };
+
+  const handleSubtaskKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, taskType: string) => {
+    if (e.key === 'Enter') {
+      addSubtask(taskType);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent, taskType: string, targetSubtask: string) => {
     e.preventDefault();
     if (!draggedSubtask || draggedTaskType !== taskType) return;
@@ -98,6 +110,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
             className="border p-2 rounded flex-grow"
             value={newTaskType}
             onChange={(e) => setNewTaskType(e.target.value)}
+            onKeyDown={handleTaskTypeKeyPress}
           />
           <Button onClick={addTaskType}>Add Task Type</Button>
         </div>
@@ -128,6 +141,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
                     ...prev,
                     [taskType]: e.target.value
                   }))}
+                  onKeyDown={(e) => handleSubtaskKeyPress(e, taskType)}
                 />
                 <Button
                   variant="outline"
