@@ -98,12 +98,12 @@ const TopControls: React.FC<TopControlsProps> = ({
           {justCopied ? (
             <>
               <Check className="w-4 h-4" />
-              <span className="hidden sm:inline">Copied!</span>
+              <span>Copied!</span>
             </>
           ) : (
             <>
               <Copy className="w-4 h-4" />
-              <span className="hidden sm:inline">Copy to {activeSemester === 'start' ? 'End' : 'Start'}</span>
+              <span>Copy to {activeSemester === 'start' ? 'End' : 'Start'}</span>
             </>
           )}
         </Button>
@@ -114,7 +114,7 @@ const TopControls: React.FC<TopControlsProps> = ({
           title="Download current task configuration as JSON"
         >
           <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Download Tasks</span>
+          <span className="hidden xl:inline">Download Tasks</span>
         </Button>
         <Button
           variant="outline"
@@ -122,14 +122,15 @@ const TopControls: React.FC<TopControlsProps> = ({
           className="flex items-center gap-2"
         >
           <Settings className="w-4 h-4" />
-          <span className="hidden sm:inline">{isEditingTasks ? 'Done Editing' : 'Edit Tasks'}</span>
+          <span>{isEditingTasks ? 'Done Editing' : 'Edit Tasks'}</span>
         </Button>
         <Button
           variant="destructive"
           onClick={onResetProgress}
-          className="flex items-center gap-2 px-4 py-2 text-sm"
+          className="flex items-center gap-2"
+          title="Reset all task progress"
         >
-          Reset Progress
+          <span>Reset Progress</span>
         </Button>
       </div>
     </div>
