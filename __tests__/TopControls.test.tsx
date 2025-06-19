@@ -20,7 +20,8 @@ jest.mock('@/components/ui/button', () => ({
 jest.mock('lucide-react', () => ({
   PlusCircle: () => <span data-testid="plus-icon">+</span>,
   Settings: () => <span data-testid="settings-icon">⚙</span>,
-  Copy: () => <span data-testid="copy-icon">📋</span>
+  Copy: () => <span data-testid="copy-icon">📋</span>,
+  Check: () => <span data-testid="check-icon">✓</span>
 }));
 
 describe('TopControls', () => {
@@ -148,5 +149,22 @@ describe('TopControls', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
     
     expect(defaultProps.onAddCourse).not.toHaveBeenCalled();
+  });
+
+  it('should show "Copied!" feedback when copy button is clicked', () => {
+    render(<TopControls {...defaultProps} currentSemesterCourseCount={2} />);
+    
+    // Initially should show copy text
+    expect(screen.getByText(/Copy to End/)).toBeInTheDocument();
+    expect(screen.getByTestId('copy-icon')).toBeInTheDocument();
+    
+    // Click the copy button
+    const copyButton = screen.getByText(/Copy to End/);
+    fireEvent.click(copyButton);
+    
+    // Should show feedback
+    expect(screen.getByText('Copied!')).toBeInTheDocument();
+    expect(screen.getByTestId('check-icon')).toBeInTheDocument();
+    expect(defaultProps.onCopyCourses).toHaveBeenCalledTimes(1);
   });
 });

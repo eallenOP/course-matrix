@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, Copy } from 'lucide-react';
+import { PlusCircle, Settings, Copy, Check } from 'lucide-react';
 import { SemesterType } from '../types/course';
 
 interface TopControlsProps {
@@ -28,10 +28,19 @@ const TopControls: React.FC<TopControlsProps> = ({
   otherSemesterCourseCount,
   onCopyCourses
 }) => {
+  const [justCopied, setJustCopied] = useState(false);
+
   const handleCourseCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onAddCourse();
     }
+  };
+
+  const handleCopyCourses = () => {
+    onCopyCourses();
+    setJustCopied(true);
+    // Reset the feedback after 2.5 seconds
+    setTimeout(() => setJustCopied(false), 2500);
   };
 
   const otherSemesterName = activeSemester === 'start' ? 'End of Semester' : 'Start of Semester';
@@ -59,13 +68,22 @@ const TopControls: React.FC<TopControlsProps> = ({
       <div className="flex gap-4 items-center">
         <Button
           variant="outline"
-          onClick={onCopyCourses}
+          onClick={handleCopyCourses}
           disabled={!canCopy}
           className="flex items-center gap-2"
           title={copyTooltip}
         >
-          <Copy className="w-4 h-4" />
-          Copy to {activeSemester === 'start' ? 'End' : 'Start'}
+          {justCopied ? (
+            <>
+              <Check className="w-4 h-4" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              Copy to {activeSemester === 'start' ? 'End' : 'Start'}
+            </>
+          )}
         </Button>
         <Button
           variant="outline"
