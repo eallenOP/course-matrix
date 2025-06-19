@@ -70,7 +70,9 @@ const CourseMatrix = () => {
     taskStatus, 
     setCourses, 
     setTasks, 
-    setTaskStatus 
+    setTaskStatus,
+    copyCourses,
+    otherSemesterCourses
   } = useSemesterPersistence(defaultStartTasks, defaultEndTasks);
 
   // Local UI state
@@ -129,6 +131,10 @@ const CourseMatrix = () => {
         isEditingTasks={isEditingTasks}
         onToggleEditTasks={() => setIsEditingTasks(!isEditingTasks)}
         onResetProgress={handleResetProgress}
+        activeSemester={activeSemester}
+        currentSemesterCourseCount={courses.length}
+        otherSemesterCourseCount={otherSemesterCourses.length}
+        onCopyCourses={copyCourses}
       />
 
       {/* Task editor */}
