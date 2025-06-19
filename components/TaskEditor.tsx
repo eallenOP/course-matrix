@@ -10,13 +10,15 @@ interface TaskEditorProps {
   tasks: Tasks;
   onTasksChange: (tasks: Tasks) => void;
   isVisible: boolean;
+  defaultTasks: Tasks;
 }
 
-const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible }) => {
+const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible, defaultTasks }) => {
   const [newTaskType, setNewTaskType] = useState<string>('');
   const [newSubtasks, setNewSubtasks] = useState<{ [taskType: string]: string }>({});
   const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
   const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
+  const [previousTasks, setPreviousTasks] = useState<Tasks | null>(null);
 
   const handleDragStart = (taskType: string, subtask: string) => {
     setDraggedSubtask(subtask);
@@ -48,7 +50,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
     subtaskList.splice(draggedIndex, 1);
     subtaskList.splice(targetIndex, 0, draggedSubtask);
 
-    onTasksChange({
+    updateTasks({
       ...tasks,
       [taskType]: subtaskList
     });
@@ -61,7 +63,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
 
   const addTaskType = () => {
     if (newTaskType) {
-      onTasksChange({
+      updateTasks({
         ...tasks,
         [newTaskType]: []
       });
@@ -72,7 +74,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   const addSubtask = (taskType: string) => {
     const subtaskValue = newSubtasks[taskType] || '';
     if (subtaskValue) {
-      onTasksChange({
+      updateTasks({
         ...tasks,
         [taskType]: [...tasks[taskType], subtaskValue]
       });
@@ -85,14 +87,31 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
 
   const removeTaskType = (taskType: string) => {
     const { [taskType]: removed, ...rest } = tasks;
-    onTasksChange(rest);
+    updateTasks(rest);
   };
 
   const removeSubtask = (taskType: string, subtask: string) => {
-    onTasksChange({
+    updateTasks({
       ...tasks,
       [taskType]: tasks[taskType].filter(t => t !== subtask)
     });
+  };
+
+  const updateTasks = (newTasks: Tasks) => {
+    setPreviousTasks(null); // Clear undo state on manual changes
+    onTasksChange(newTasks);
+  };
+
+  const resetToDefault = () => {
+    setPreviousTasks({ ...tasks }); // Save current state for undo
+    onTasksChange(defaultTasks);
+  };
+
+  const undoReset = () => {
+    if (previousTasks) {
+      onTasksChange(previousTasks);
+      setPreviousTasks(null); // Clear undo state
+    }
   };
 
   if (!isVisible) return null;
@@ -100,7 +119,27 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   return (
     <Card className="mb-8">
       <CardContent className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Edit Tasks</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Edit Tasks</h2>
+          <div className="flex gap-2">
+            {previousTasks && (
+              <Button
+                variant="outline"
+                onClick={undoReset}
+                title="Undo reset to restore previous tasks"
+              >
+                Undo Reset
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={resetToDefault}
+              title="Reset tasks to default tasks"
+            >
+              Reset to Default
+            </Button>
+          </div>
+        </div>
 
         {/* Add new task type */}
         <div className="flex gap-2 mb-6">

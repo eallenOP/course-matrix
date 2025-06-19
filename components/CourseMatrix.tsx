@@ -138,6 +138,7 @@ const CourseMatrix = () => {
         tasks={tasks}
         onTasksChange={setTasks}
         isVisible={isEditingTasks}
+        defaultTasks={activeSemester === 'start' ? defaultStartTasks : defaultEndTasks}
       />
 
       {/* Matrix */}
