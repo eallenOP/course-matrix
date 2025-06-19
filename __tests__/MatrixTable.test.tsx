@@ -36,15 +36,15 @@ describe('MatrixTable', () => {
   ];
 
   const mockTasks = {
-    'Setup': ['Create syllabus', 'Setup Moodle'],
-    'Grading': ['Setup rubric'],
+    'Task Type A': ['Subtask A1', 'Subtask A2'],
+    'Task Type B': ['Subtask B1'],
   };
 
   const mockTaskStatus = {
-    '1-Setup-Create syllabus': true,
-    '1-Setup-Setup Moodle': false,
-    '2-Setup-Create syllabus': 'na' as const,
-    '1-Grading-Setup rubric': true,
+    '1-Task Type A-Subtask A1': true,
+    '1-Task Type A-Subtask A2': false,
+    '2-Task Type A-Subtask A1': 'na' as const,
+    '1-Task Type B-Subtask B1': true,
   };
 
   const mockProps = {
@@ -93,12 +93,12 @@ describe('MatrixTable', () => {
     render(<MatrixTable {...mockProps} />);
 
     // Check that task types are displayed
-    expect(screen.getByText('Setup')).toBeTruthy();
-    expect(screen.getByText('Grading')).toBeTruthy();
+    expect(screen.getByText('Task Type A')).toBeTruthy();
+    expect(screen.getByText('Task Type B')).toBeTruthy();
 
     // Check that task progress calculations are called
-    expect(mockProps.calculateTaskProgress).toHaveBeenCalledWith('Setup');
-    expect(mockProps.calculateTaskProgress).toHaveBeenCalledWith('Grading');
+    expect(mockProps.calculateTaskProgress).toHaveBeenCalledWith('Task Type A');
+    expect(mockProps.calculateTaskProgress).toHaveBeenCalledWith('Task Type B');
   });
 
   it('should call onExpandTask when task row is clicked', async () => {
@@ -106,23 +106,23 @@ describe('MatrixTable', () => {
     
     render(<MatrixTable {...mockProps} />);
 
-    const setupTask = screen.getByText('Setup');
-    await user.click(setupTask);
+    const taskTypeA = screen.getByText('Task Type A');
+    await user.click(taskTypeA);
 
-    expect(mockProps.onExpandTask).toHaveBeenCalledWith('Setup');
+    expect(mockProps.onExpandTask).toHaveBeenCalledWith('Task Type A');
   });
 
   it('should display subtasks when task is expanded', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Setup"
+        expandedTask="Task Type A"
       />
     );
 
     // Check that subtasks are displayed when expanded
-    expect(screen.getByText('Create syllabus')).toBeTruthy();
-    expect(screen.getByText('Setup Moodle')).toBeTruthy();
+    expect(screen.getByText('Subtask A1')).toBeTruthy();
+    expect(screen.getByText('Subtask A2')).toBeTruthy();
   });
 
   it('should not display subtasks when task is not expanded', () => {
@@ -134,15 +134,15 @@ describe('MatrixTable', () => {
     );
 
     // Subtasks should not be visible when not expanded
-    expect(screen.queryByText('Create syllabus')).toBeNull();
-    expect(screen.queryByText('Setup Moodle')).toBeNull();
+    expect(screen.queryByText('Subtask A1')).toBeNull();
+    expect(screen.queryByText('Subtask A2')).toBeNull();
   });
 
   it('should display correct status icons for different task statuses', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Setup"
+        expandedTask="Task Type A"
       />
     );
 
@@ -165,7 +165,7 @@ describe('MatrixTable', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Setup"
+        expandedTask="Task Type A"
       />
     );
 
@@ -245,9 +245,9 @@ describe('MatrixTable', () => {
     expect(progressBars.length).toBeGreaterThan(0);
 
     // Should call calculateCourseTaskProgress for each course-task combination
-    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(1, 'Setup');
-    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Setup');
-    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(1, 'Grading');
-    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Grading');
+    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(1, 'Task Type A');
+    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Task Type A');
+    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(1, 'Task Type B');
+    expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Task Type B');
   });
 });
