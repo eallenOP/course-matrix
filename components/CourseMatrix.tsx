@@ -33,17 +33,31 @@ const CourseMatrix = () => {
     ]
   };
 
-  // Default task types for end of semester (placeholder for now)
+  // Default task types for end of semester
   const defaultEndTasks: Tasks = {
     'Final Grades': [
       'Calculate final grades',
       'Submit grades to registrar',
-      'Archive course materials'
+      'Complete grade appeal period',
+      'Archive gradebook'
     ],
     'Course Evaluation': [
       'Review student feedback',
       'Complete teaching reflection',
-      'Update course for next semester'
+      'Document lessons learned',
+      'Plan improvements for next semester'
+    ],
+    'Course Cleanup': [
+      'Archive course materials',
+      'Clean up Moodle site',
+      'Export important data',
+      'Remove temporary files'
+    ],
+    'Administrative': [
+      'Submit final reports',
+      'Update course statistics',
+      'Complete teaching evaluations',
+      'Schedule debrief meeting'
     ]
   };
 
