@@ -183,10 +183,9 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('End of Semester')).toHaveClass('bg-blue-100');
-      expect(screen.getByText('Final Grades')).toBeInTheDocument();
-      expect(screen.getByText('Course Evaluation')).toBeInTheDocument();
-      expect(screen.getByText('Course Cleanup')).toBeInTheDocument();
-      expect(screen.getByText('Administrative')).toBeInTheDocument();
+      expect(screen.getByText('EBS')).toBeInTheDocument();
+      expect(screen.getByText('Moodle')).toBeInTheDocument();
+      expect(screen.getByText('Archive and moderation')).toBeInTheDocument();
     });
 
     // Verify CS101 is not in end semester (independent data)
@@ -216,7 +215,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     // Verify start semester tasks are still there
     expect(screen.getByText('Course Directive')).toBeInTheDocument();
     expect(screen.getByText('Moodle')).toBeInTheDocument();
-    expect(screen.queryByText('Final Grades')).not.toBeInTheDocument();
+    expect(screen.queryByText('EBS')).not.toBeInTheDocument();
 
     // Test persistence by re-rendering (simulating page refresh)
     rerender(<CourseMatrix />);
@@ -258,8 +257,8 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     fireEvent.click(endTab);
 
     await waitFor(() => {
-      expect(screen.getByText('Final Grades')).toBeInTheDocument();
-      expect(screen.getByText('Course Evaluation')).toBeInTheDocument();
+      expect(screen.getByText('EBS')).toBeInTheDocument();
+      expect(screen.getByText('Archive and moderation')).toBeInTheDocument();
     });
 
     // Should still be in edit mode for end semester
@@ -290,7 +289,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     fireEvent.click(screen.getByText('End of Semester'));
     
     await waitFor(() => {
-      expect(screen.getByText('Final Grades')).toBeInTheDocument();
+      expect(screen.getByText('EBS')).toBeInTheDocument();
     });
 
     const endCourseInput = screen.getByPlaceholderText('Enter course code');
@@ -348,7 +347,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     });
 
     // Verify end semester tasks are displayed (not start semester tasks)
-    expect(screen.getByText('Final Grades')).toBeInTheDocument();
+    expect(screen.getByText('EBS')).toBeInTheDocument();
     expect(screen.queryByText('Course Directive')).not.toBeInTheDocument();
   });
 });

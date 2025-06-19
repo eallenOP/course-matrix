@@ -23,6 +23,7 @@ const CourseMatrix = () => {
     'Moodle': [
       'Update schedule',
       'Check assignment deadlines',
+      'Update GitHub Classroom links',
       'Add students'
     ],
     'Teams Setup': [
@@ -35,29 +36,23 @@ const CourseMatrix = () => {
 
   // Default task types for end of semester
   const defaultEndTasks: Tasks = {
-    'Final Grades': [
-      'Calculate final grades',
-      'Submit grades to registrar',
-      'Complete grade appeal period',
-      'Archive gradebook'
+    'EBS': [
+      'Marks entered',
+      'Checked status',
+      'Produce report'
     ],
-    'Course Evaluation': [
-      'Review student feedback',
-      'Complete teaching reflection',
-      'Document lessons learned',
-      'Plan improvements for next semester'
+    'Moodle': [
+      'Download assessments',
+      'Export grades',
+      'Back up course',
+      'Remove learners',
+      'Reset course'
     ],
-    'Course Cleanup': [
-      'Archive course materials',
-      'Clean up Moodle site',
-      'Export important data',
-      'Remove temporary files'
-    ],
-    'Administrative': [
-      'Submit final reports',
-      'Update course statistics',
-      'Complete teaching evaluations',
-      'Schedule debrief meeting'
+    'Archive and moderation': [
+      'External assessment archive',
+      'Moderation forms',
+      'Grades in mod folder',
+      'Submissions in mod folder'
     ]
   };
 
