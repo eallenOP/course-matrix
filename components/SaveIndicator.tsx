@@ -21,15 +21,28 @@ const SaveIndicator: React.FC<SaveIndicatorProps> = ({
 
   // Show indicator when there's activity
   useEffect(() => {
-    if (isLoading || error) {
+    if (isLoading) {
+      // Only show loading after 200ms delay to avoid flicker
+      const showTimer = setTimeout(() => {
+        setShowIndicator(true);
+      }, 200);
+      return () => clearTimeout(showTimer);
+    } else if (error) {
       setShowIndicator(true);
+      // Keep error visible longer
+      const hideTimer = setTimeout(() => {
+        setShowIndicator(false);
+      }, 8000);
+      return () => clearTimeout(hideTimer);
     } else if (lastSaved) {
       setShowIndicator(true);
-      // Hide after 3 seconds of successful save
-      const timer = setTimeout(() => {
+      // Hide success message after 2 seconds
+      const hideTimer = setTimeout(() => {
         setShowIndicator(false);
-      }, 3000);
-      return () => clearTimeout(timer);
+      }, 2000);
+      return () => clearTimeout(hideTimer);
+    } else {
+      setShowIndicator(false);
     }
   }, [isLoading, error, lastSaved]);
 
@@ -84,7 +97,7 @@ const SaveIndicator: React.FC<SaveIndicatorProps> = ({
       return {
         icon: <CheckCircle2 className="w-4 h-4" />,
         text: 'Saved',
-        bgColor: 'bg-green-500',
+        bgColor: 'bg-green-600',
         textColor: 'text-white'
       };
     }

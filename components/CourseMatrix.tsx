@@ -6,8 +6,8 @@ import MatrixTable from './MatrixTable';
 import TopControls from './TopControls';
 import Legend from './Legend';
 import SemesterTabs from './SemesterTabs';
-import StatusBar from './StatusBar';
 import SaveIndicator from './SaveIndicator';
+import ErrorAlert from './ErrorAlert';
 import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { progressCalculations } from '../utils/progressCalculations';
 import { resetTaskStatuses } from '../utils/taskActions';
@@ -114,8 +114,8 @@ const CourseMatrix = () => {
     resetTaskStatuses(courses, tasks, setTaskStatus);
   };
 
-  // Show loading screen on initial load
-  if (isLoading && courses.length === 0 && Object.keys(tasks).length === 0) {
+  // Show loading screen only on very initial load (when we have no data at all)
+  if (isLoading && courses.length === 0 && Object.keys(tasks).length <= 3) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -130,13 +130,13 @@ const CourseMatrix = () => {
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
 
-      {/* Status Bar */}
-      <StatusBar
-        isLoading={isLoading}
-        error={storageError}
-        lastSaved={lastSaved}
-        onClearError={clearStorageError}
-      />
+      {/* Error Alert - only show when there's an error */}
+      {storageError && (
+        <ErrorAlert
+          error={storageError}
+          onDismiss={clearStorageError}
+        />
+      )}
 
       {/* Semester tabs */}
       <SemesterTabs
@@ -194,7 +194,7 @@ const CourseMatrix = () => {
       
       {/* Floating Save Indicator */}
       <SaveIndicator
-        isLoading={isLoading}
+        isLoading={isLoading && courses.length > 0} // Only show loading for saves, not initial load
         error={storageError}
         lastSaved={lastSaved}
       />
