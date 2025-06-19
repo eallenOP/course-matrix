@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings } from 'lucide-react';
+import { PlusCircle, Settings, Copy } from 'lucide-react';
+import { SemesterType } from '../types/course';
 
 interface TopControlsProps {
   newCourseCode: string;
@@ -9,6 +10,10 @@ interface TopControlsProps {
   isEditingTasks: boolean;
   onToggleEditTasks: () => void;
   onResetProgress: () => void;
+  activeSemester: SemesterType;
+  currentSemesterCourseCount: number;
+  otherSemesterCourseCount: number;
+  onCopyCourses: () => void;
 }
 
 const TopControls: React.FC<TopControlsProps> = ({
@@ -17,13 +22,23 @@ const TopControls: React.FC<TopControlsProps> = ({
   onAddCourse,
   isEditingTasks,
   onToggleEditTasks,
-  onResetProgress
+  onResetProgress,
+  activeSemester,
+  currentSemesterCourseCount,
+  otherSemesterCourseCount,
+  onCopyCourses
 }) => {
   const handleCourseCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onAddCourse();
     }
   };
+
+  const otherSemesterName = activeSemester === 'start' ? 'End of Semester' : 'Start of Semester';
+  const canCopy = currentSemesterCourseCount > 0;
+  const copyTooltip = canCopy 
+    ? `Copy ${currentSemesterCourseCount} course${currentSemesterCourseCount === 1 ? '' : 's'} to ${otherSemesterName}`
+    : 'No courses to copy';
 
   return (
     <div className="flex justify-between mb-8 items-center">
@@ -42,6 +57,16 @@ const TopControls: React.FC<TopControlsProps> = ({
         </Button>
       </div>
       <div className="flex gap-4 items-center">
+        <Button
+          variant="outline"
+          onClick={onCopyCourses}
+          disabled={!canCopy}
+          className="flex items-center gap-2"
+          title={copyTooltip}
+        >
+          <Copy className="w-4 h-4" />
+          Copy to {activeSemester === 'start' ? 'End' : 'Start'}
+        </Button>
         <Button
           variant="outline"
           onClick={onToggleEditTasks}
