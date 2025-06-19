@@ -3,13 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TopControls from '../components/TopControls';
 
-// Mock the lucide-react icons
-jest.mock('lucide-react', () => ({
-  PlusCircle: ({ className }: any) => <div data-testid="plus-icon" className={className} />,
-  Settings: ({ className }: any) => <div data-testid="settings-icon" className={className} />,
-  Copy: ({ className }: any) => <div data-testid="copy-icon" className={className} />,
-}));
-
 // Mock the UI components
 jest.mock('@/components/ui/button', () => ({
   Button: ({ children, onClick, variant, className }: any) => (
@@ -26,7 +19,8 @@ jest.mock('@/components/ui/button', () => ({
 // Mock Lucide icons
 jest.mock('lucide-react', () => ({
   PlusCircle: () => <span data-testid="plus-icon">+</span>,
-  Settings: () => <span data-testid="settings-icon">⚙</span>
+  Settings: () => <span data-testid="settings-icon">⚙</span>,
+  Copy: () => <span data-testid="copy-icon">📋</span>
 }));
 
 describe('TopControls', () => {
@@ -116,6 +110,7 @@ describe('TopControls', () => {
     
     expect(screen.getByTestId('plus-icon')).toBeInTheDocument();
     expect(screen.getByTestId('settings-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('copy-icon')).toBeInTheDocument();
   });
 
   it('should apply correct button variants', () => {

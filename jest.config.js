@@ -11,6 +11,7 @@ const customJestConfig = {
   testEnvironment: 'jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^lucide-react$': '<rootDir>/__mocks__/lucide-react.js',
   },
 }
 
