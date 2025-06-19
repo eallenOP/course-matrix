@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { Tasks } from '../types/course';
 
@@ -137,28 +137,33 @@ describe('useSemesterPersistence - Data Separation', () => {
     expect(endData.taskStatus).toEqual({ '2-Final Grades-Grade 1': true });
   });
 
-  it('should load persisted data correctly on initialization', () => {
+  it('should load persisted data correctly on initialization', async () => {
     // Pre-populate localStorage
-    localStorageMock.setItem('courseMatrix_activeSemester', 'end');
+    localStorageMock.setItem('courseMatrix_activeSemester', JSON.stringify('end'));
     localStorageMock.setItem('courseMatrix_startSemester', JSON.stringify({
       courses: [{ id: 1, code: 'SAVED_START' }],
       tasks: defaultStartTasks,
-      taskStatus: { 'saved-start-task': true }
+      taskStatus: { '1-Course Directive-Task 1': true }
     }));
     localStorageMock.setItem('courseMatrix_endSemester', JSON.stringify({
       courses: [{ id: 2, code: 'SAVED_END' }],
       tasks: defaultEndTasks,
-      taskStatus: { 'saved-end-task': true }
+      taskStatus: { '2-Final Grades-Grade 1': true }
     }));
 
     const { result } = renderHook(() => 
       useSemesterPersistence(defaultStartTasks, defaultEndTasks)
     );
 
+    // Wait for initial loading to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     // Should load end semester as active
     expect(result.current.activeSemester).toBe('end');
     expect(result.current.courses).toEqual([{ id: 2, code: 'SAVED_END' }]);
-    expect(result.current.taskStatus).toEqual({ 'saved-end-task': true });
+    expect(result.current.taskStatus).toEqual({ '2-Final Grades-Grade 1': true });
 
     // Switch to start semester and verify it loaded correctly
     act(() => {
@@ -166,7 +171,7 @@ describe('useSemesterPersistence - Data Separation', () => {
     });
 
     expect(result.current.courses).toEqual([{ id: 1, code: 'SAVED_START' }]);
-    expect(result.current.taskStatus).toEqual({ 'saved-start-task': true });
+    expect(result.current.taskStatus).toEqual({ '1-Course Directive-Task 1': true });
   });
 
   it('should copy courses from current semester to the other semester', () => {

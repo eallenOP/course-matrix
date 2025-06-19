@@ -163,9 +163,11 @@ export function useSemesterPersistence(
     loadData();
   }, []); // Empty dependency array - only run once!
 
-  // Save active semester when it changes
+  // Save active semester when it changes (but not during initial load)
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
+  
   useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
+    if (isInitialized && hasLoadedInitialData && typeof window !== 'undefined') {
       const saveActiveSemester = async () => {
         const result = await safeSetItem('courseMatrix_activeSemester', activeSemester, {
           onError: handleStorageError
@@ -180,7 +182,7 @@ export function useSemesterPersistence(
       
       saveActiveSemester();
     }
-  }, [activeSemester, isInitialized, handleStorageError]);
+  }, [activeSemester, isInitialized, hasLoadedInitialData, handleStorageError]);
 
   // Save start semester data when it changes
   useEffect(() => {
@@ -290,9 +292,15 @@ export function useSemesterPersistence(
     ? { courses: endCourses, tasks: endTasks, taskStatus: endTaskStatus }
     : { courses: startCourses, tasks: startTasks, taskStatus: startTaskStatus };
 
+  // Wrapper for setActiveSemester that tracks user-initiated changes
+  const handleSetActiveSemester = useCallback((semester: SemesterType) => {
+    setHasLoadedInitialData(true); // Mark that user has made a change
+    setActiveSemester(semester);
+  }, []);
+
   return {
     activeSemester,
-    setActiveSemester,
+    setActiveSemester: handleSetActiveSemester,
     courses: currentData.courses,
     tasks: currentData.tasks,
     taskStatus: currentData.taskStatus,
