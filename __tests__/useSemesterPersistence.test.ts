@@ -199,10 +199,11 @@ describe('useSemesterPersistence - Data Separation', () => {
       result.current.setActiveSemester('end');
     });
 
-    expect(result.current.courses).toEqual([
-      { id: 1, code: 'CS101' },
-      { id: 2, code: 'MATH201' }
-    ]);
+    // Courses should be copied with new IDs but same codes
+    expect(result.current.courses).toHaveLength(2);
+    expect(result.current.courses.map(c => c.code)).toEqual(['CS101', 'MATH201']);
+    expect(result.current.courses[0].id).not.toBe(1); // IDs should be different
+    expect(result.current.courses[1].id).not.toBe(2);
 
     // Add a course to end semester
     act(() => {
