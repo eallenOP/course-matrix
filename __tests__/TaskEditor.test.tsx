@@ -576,5 +576,43 @@ describe('TaskEditor', () => {
       const editingContainer = screen.getByDisplayValue('Create syllabus').closest('[draggable]');
       expect(editingContainer).toHaveAttribute('draggable', 'false');
     });
+
+    it('should preserve task type order when editing task type name', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on the first task type to edit it
+      const taskTypeName = screen.getByText('Course Setup');
+      await user.click(taskTypeName);
+
+      // Edit the task type name
+      const editInput = screen.getByDisplayValue('Course Setup');
+      await user.clear(editInput);
+      await user.type(editInput, 'Updated Course Setup');
+      
+      // Press Enter to save
+      fireEvent.keyDown(editInput, { key: 'Enter' });
+
+      // Verify the callback was called with the task types in the same order
+      await waitFor(() => {
+        expect(mockOnTasksChange).toHaveBeenCalledWith({
+          'Updated Course Setup': mockTasks['Course Setup'], // First position preserved
+          'Grading': mockTasks['Grading'] // Second position preserved
+        });
+      });
+      
+      // Verify the order by checking the keys array
+      const lastCall = mockOnTasksChange.mock.calls[mockOnTasksChange.mock.calls.length - 1][0];
+      const taskTypeKeys = Object.keys(lastCall);
+      expect(taskTypeKeys).toEqual(['Updated Course Setup', 'Grading']);
+    });
   });
 });

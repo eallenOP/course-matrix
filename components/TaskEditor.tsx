@@ -130,12 +130,22 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
 
   const saveTaskTypeEdit = () => {
     if (editingTaskType && editTaskTypeValue.trim() && editTaskTypeValue !== editingTaskType) {
+      const newTaskTypeName = editTaskTypeValue.trim();
       const subtasks = tasks[editingTaskType];
-      const { [editingTaskType]: removed, ...restTasks } = tasks;
-      const newTasks = {
-        ...restTasks,
-        [editTaskTypeValue.trim()]: subtasks
-      };
+      
+      // Preserve the original order by rebuilding the object with the same key positions
+      const newTasks: Tasks = {};
+      
+      Object.entries(tasks).forEach(([taskType, taskSubtasks]) => {
+        if (taskType === editingTaskType) {
+          // Replace with new name at the same position
+          newTasks[newTaskTypeName] = subtasks;
+        } else {
+          // Keep existing task types unchanged
+          newTasks[taskType] = taskSubtasks;
+        }
+      });
+      
       updateTasks(newTasks);
     }
     setEditingTaskType(null);
