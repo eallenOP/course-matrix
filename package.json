@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --watchAll=false --runInBand",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.1",

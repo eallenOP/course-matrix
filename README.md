@@ -1,5 +1,8 @@
 # Course Preparation Matrix
 
+[![Test Suite](https://github.com/eallenop/course-matrix/actions/workflows/test.yml/badge.svg)](https://github.com/eallenop/course-matrix/actions/workflows/test.yml)
+[![PR Checks](https://github.com/eallenop/course-matrix/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/eallenop/course-matrix/actions/workflows/pr-checks.yml)
+
 This is a small project made using Claude.ai artefacts with some help from ChatGPT. Feel free to fork it, remix it, distribute it or follow the link to the live version and use it.
 
 If you have an improvement you want to share please go ahead and submit a PR. Could be a new feature, a test suite or a bug fix, or whatever.

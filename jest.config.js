@@ -13,6 +13,21 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/$1',
     '^lucide-react$': '<rootDir>/__mocks__/lucide-react.js',
   },
+  // CI optimizations
+  maxWorkers: process.env.CI ? 2 : '50%',
+  forceExit: process.env.CI ? true : false,
+  detectOpenHandles: process.env.CI ? false : true,
+  // Coverage settings
+  collectCoverageFrom: [
+    '**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/coverage/**',
+    '!jest.config.js',
+    '!jest.setup.js',
+    '!**/*.config.{js,ts}',
+  ],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
