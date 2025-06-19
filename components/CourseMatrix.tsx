@@ -6,6 +6,8 @@ import MatrixTable from './MatrixTable';
 import TopControls from './TopControls';
 import Legend from './Legend';
 import SemesterTabs from './SemesterTabs';
+import StatusBar from './StatusBar';
+import SaveIndicator from './SaveIndicator';
 import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { progressCalculations } from '../utils/progressCalculations';
 import { resetTaskStatuses } from '../utils/taskActions';
@@ -67,7 +69,11 @@ const CourseMatrix = () => {
     setTasks, 
     setTaskStatus,
     copyCourses,
-    otherSemesterCourses
+    otherSemesterCourses,
+    isLoading,
+    storageError,
+    lastSaved,
+    clearStorageError
   } = useSemesterPersistence(defaultStartTasks, defaultEndTasks);
 
   // Local UI state
@@ -108,9 +114,29 @@ const CourseMatrix = () => {
     resetTaskStatuses(courses, tasks, setTaskStatus);
   };
 
+  // Show loading screen on initial load
+  if (isLoading && courses.length === 0 && Object.keys(tasks).length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your course data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
+
+      {/* Status Bar */}
+      <StatusBar
+        isLoading={isLoading}
+        error={storageError}
+        lastSaved={lastSaved}
+        onClearError={clearStorageError}
+      />
 
       {/* Semester tabs */}
       <SemesterTabs
@@ -165,6 +191,13 @@ const CourseMatrix = () => {
 
       {/* Legend */}
       <Legend />
+      
+      {/* Floating Save Indicator */}
+      <SaveIndicator
+        isLoading={isLoading}
+        error={storageError}
+        lastSaved={lastSaved}
+      />
     </div>
   );
 };
