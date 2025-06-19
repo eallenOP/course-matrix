@@ -168,4 +168,64 @@ describe('useSemesterPersistence - Data Separation', () => {
     expect(result.current.courses).toEqual([{ id: 1, code: 'SAVED_START' }]);
     expect(result.current.taskStatus).toEqual({ 'saved-start-task': true });
   });
+
+  it('should copy courses from current semester to the other semester', () => {
+    const { result } = renderHook(() => 
+      useSemesterPersistence(defaultStartTasks, defaultEndTasks)
+    );
+
+    // Initially on start semester, add some courses
+    act(() => {
+      result.current.setCourses([
+        { id: 1, code: 'CS101' },
+        { id: 2, code: 'MATH201' }
+      ]);
+    });
+
+    // Verify courses are in start semester
+    expect(result.current.courses).toEqual([
+      { id: 1, code: 'CS101' },
+      { id: 2, code: 'MATH201' }
+    ]);
+    expect(result.current.otherSemesterCourses).toEqual([]);
+
+    // Copy courses to end semester
+    act(() => {
+      result.current.copyCourses();
+    });
+
+    // Switch to end semester and verify courses were copied
+    act(() => {
+      result.current.setActiveSemester('end');
+    });
+
+    expect(result.current.courses).toEqual([
+      { id: 1, code: 'CS101' },
+      { id: 2, code: 'MATH201' }
+    ]);
+
+    // Add a course to end semester
+    act(() => {
+      result.current.setCourses([
+        ...result.current.courses,
+        { id: 3, code: 'PHY301' }
+      ]);
+    });
+
+    // Copy from end back to start
+    act(() => {
+      result.current.copyCourses();
+    });
+
+    // Switch to start and verify it now has all courses
+    act(() => {
+      result.current.setActiveSemester('start');
+    });
+
+    expect(result.current.courses).toEqual([
+      { id: 1, code: 'CS101' },
+      { id: 2, code: 'MATH201' },
+      { id: 3, code: 'PHY301' }
+    ]);
+  });
 });
