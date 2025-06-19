@@ -123,10 +123,26 @@ export function useSemesterPersistence(
     }
   };
 
+  // Function to copy courses from current semester to the other semester
+  const copyCourses = () => {
+    if (activeSemester === 'start') {
+      // Copy from start to end
+      setEndCourses([...startCourses]);
+    } else {
+      // Copy from end to start
+      setStartCourses([...endCourses]);
+    }
+  };
+
   // Get current semester data
   const currentData = activeSemester === 'start' 
     ? { courses: startCourses, tasks: startTasks, taskStatus: startTaskStatus }
     : { courses: endCourses, tasks: endTasks, taskStatus: endTaskStatus };
+
+  // Get other semester data for display purposes
+  const otherSemesterData = activeSemester === 'start' 
+    ? { courses: endCourses, tasks: endTasks, taskStatus: endTaskStatus }
+    : { courses: startCourses, tasks: startTasks, taskStatus: startTaskStatus };
 
   return {
     activeSemester,
@@ -137,5 +153,7 @@ export function useSemesterPersistence(
     setCourses: updateCourses,
     setTasks: updateTasks,
     setTaskStatus: updateTaskStatus,
+    copyCourses,
+    otherSemesterCourses: otherSemesterData.courses,
   };
 }
