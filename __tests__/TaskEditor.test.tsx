@@ -49,6 +49,11 @@ describe('TaskEditor', () => {
     'Grading': ['Setup rubric', 'Configure gradebook'],
   };
 
+  const mockDefaultTasks = {
+    'Course Setup': ['Create syllabus', 'Setup Moodle'],
+    'Grading': ['Setup rubric', 'Configure gradebook'],
+  };
+
   const mockOnTasksChange = jest.fn();
 
   beforeEach(() => {
@@ -62,6 +67,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -90,6 +96,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -118,6 +125,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -140,6 +148,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -164,6 +173,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={false}
       />
     );
@@ -177,6 +187,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -199,6 +210,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -221,6 +233,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -245,6 +258,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -267,6 +281,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -291,6 +306,7 @@ describe('TaskEditor', () => {
       <TaskEditor
         tasks={mockTasks}
         onTasksChange={mockOnTasksChange}
+        defaultTasks={mockDefaultTasks}
         isVisible={true}
       />
     );
@@ -305,5 +321,260 @@ describe('TaskEditor', () => {
     });
 
     expect(mockOnTasksChange).not.toHaveBeenCalled();
+  });
+
+  describe('Inline Editing', () => {
+    it('should allow editing task type name by clicking on it', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on the first task type name to edit it
+      const taskTypeName = screen.getByText('Course Setup');
+      await user.click(taskTypeName);
+
+      // Should show an input field
+      const editInput = screen.getByDisplayValue('Course Setup');
+      expect(editInput).toBeTruthy();
+
+      // Edit the task type name
+      await user.clear(editInput);
+      await user.type(editInput, 'Updated Course Setup');
+      
+      // Press Enter to save
+      fireEvent.keyDown(editInput, { key: 'Enter' });
+
+      // Verify the callback was called with the updated task type
+      await waitFor(() => {
+        expect(mockOnTasksChange).toHaveBeenCalledWith({
+          'Updated Course Setup': mockTasks['Course Setup'],
+          'Grading': mockTasks['Grading']
+        });
+      });
+    });
+
+    it('should cancel task type editing when Escape is pressed', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on task type to edit
+      const taskTypeName = screen.getByText('Course Setup');
+      await user.click(taskTypeName);
+
+      // Edit the value
+      const editInput = screen.getByDisplayValue('Course Setup');
+      await user.clear(editInput);
+      await user.type(editInput, 'Changed Name');
+      
+      // Press Escape to cancel
+      fireEvent.keyDown(editInput, { key: 'Escape' });
+
+      // Should not call onTasksChange
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+      
+      // Should show original task type name again
+      expect(screen.getByText('Course Setup')).toBeTruthy();
+    });
+
+    it('should allow editing subtask text by clicking on it', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on the first subtask to edit it
+      const subtaskText = screen.getByText('Create syllabus');
+      await user.click(subtaskText);
+
+      // Should show an input field
+      const editInput = screen.getByDisplayValue('Create syllabus');
+      expect(editInput).toBeTruthy();
+
+      // Edit the subtask text
+      await user.clear(editInput);
+      await user.type(editInput, 'Updated syllabus');
+      
+      // Press Enter to save
+      fireEvent.keyDown(editInput, { key: 'Enter' });
+
+      // Verify the callback was called with the updated subtask
+      await waitFor(() => {
+        expect(mockOnTasksChange).toHaveBeenCalledWith({
+          ...mockTasks,
+          'Course Setup': ['Updated syllabus', 'Setup Moodle']
+        });
+      });
+    });
+
+    it('should cancel subtask editing when Escape is pressed', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on subtask to edit
+      const subtaskText = screen.getByText('Create syllabus');
+      await user.click(subtaskText);
+
+      // Edit the value
+      const editInput = screen.getByDisplayValue('Create syllabus');
+      await user.clear(editInput);
+      await user.type(editInput, 'Changed Text');
+      
+      // Press Escape to cancel
+      fireEvent.keyDown(editInput, { key: 'Escape' });
+
+      // Should not call onTasksChange
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+      
+      // Should show original subtask text again
+      expect(screen.getByText('Create syllabus')).toBeTruthy();
+    });
+
+    it('should save task type edit when input loses focus', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on task type to edit
+      const taskTypeName = screen.getByText('Course Setup');
+      await user.click(taskTypeName);
+
+      // Edit the value
+      const editInput = screen.getByDisplayValue('Course Setup');
+      await user.clear(editInput);
+      await user.type(editInput, 'Blurred Task Type');
+      
+      // Blur the input (simulate clicking outside)
+      fireEvent.blur(editInput);
+
+      // Verify the callback was called
+      await waitFor(() => {
+        expect(mockOnTasksChange).toHaveBeenCalledWith({
+          'Blurred Task Type': mockTasks['Course Setup'],
+          'Grading': mockTasks['Grading']
+        });
+      });
+    });
+
+    it('should save subtask edit when input loses focus', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on subtask to edit
+      const subtaskText = screen.getByText('Create syllabus');
+      await user.click(subtaskText);
+
+      // Edit the value
+      const editInput = screen.getByDisplayValue('Create syllabus');
+      await user.clear(editInput);
+      await user.type(editInput, 'Blurred subtask');
+      
+      // Blur the input (simulate clicking outside)
+      fireEvent.blur(editInput);
+
+      // Verify the callback was called
+      await waitFor(() => {
+        expect(mockOnTasksChange).toHaveBeenCalledWith({
+          ...mockTasks,
+          'Course Setup': ['Blurred subtask', 'Setup Moodle']
+        });
+      });
+    });
+
+    it('should not save changes if text is empty or unchanged', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Test empty task type
+      const taskTypeName = screen.getByText('Course Setup');
+      await user.click(taskTypeName);
+      const taskTypeInput = screen.getByDisplayValue('Course Setup');
+      await user.clear(taskTypeInput);
+      fireEvent.keyDown(taskTypeInput, { key: 'Enter' });
+      
+      // Should not call onTasksChange for empty value
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+
+      // Test unchanged task type
+      const unchanged = screen.getByText('Course Setup');
+      await user.click(unchanged);
+      const unchangedInput = screen.getByDisplayValue('Course Setup');
+      fireEvent.keyDown(unchangedInput, { key: 'Enter' });
+      
+      // Should not call onTasksChange for unchanged value
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+    });
+
+    it('should disable dragging when editing a subtask', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <TaskEditor
+          tasks={mockTasks}
+          onTasksChange={mockOnTasksChange}
+          defaultTasks={mockDefaultTasks}
+          isVisible={true}
+        />
+      );
+
+      // Click on subtask to edit
+      const subtaskText = screen.getByText('Create syllabus');
+      await user.click(subtaskText);
+
+      // Find the container div that has the draggable attribute
+      const editingContainer = screen.getByDisplayValue('Create syllabus').closest('[draggable]');
+      expect(editingContainer).toHaveAttribute('draggable', 'false');
+    });
   });
 });
