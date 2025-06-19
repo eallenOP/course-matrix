@@ -123,15 +123,24 @@ export function useSemesterPersistence(
     }
   };
 
-  // Function to copy courses from current semester to the other semester
+  // Function to copy courses from the other semester to current semester
   const copyCourses = () => {
-    if (activeSemester === 'start') {
-      // Copy from start to end
-      setEndCourses([...startCourses]);
-    } else {
-      // Copy from end to start
-      setStartCourses([...endCourses]);
-    }
+    const sourceData = activeSemester === 'start' 
+      ? { courses: endCourses, setCourses: setStartCourses, currentCourses: startCourses }
+      : { courses: startCourses, setCourses: setEndCourses, currentCourses: endCourses };
+
+    // Create copies of source courses with new IDs
+    const coursesToCopy = sourceData.courses.map(course => ({
+      ...course,
+      id: Date.now() + Math.random() // Generate new unique ID
+    }));
+
+    // Filter out courses that already exist (by code) in the current semester
+    const currentCodes = sourceData.currentCourses.map(c => c.code);
+    const newCourses = coursesToCopy.filter(course => !currentCodes.includes(course.code));
+
+    // Append new courses to existing ones
+    sourceData.setCourses([...sourceData.currentCourses, ...newCourses]);
   };
 
   // Get current semester data
