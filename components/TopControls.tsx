@@ -72,7 +72,7 @@ const TopControls: React.FC<TopControlsProps> = ({
     : 'No courses to copy';
 
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between mb-8 gap-4 sm:items-center">
+    <div className="flex flex-col wide:flex-row wide:justify-between mb-8 gap-4 wide:items-center">
       <div className="flex gap-4">
         <input
           type="text"
@@ -87,7 +87,7 @@ const TopControls: React.FC<TopControlsProps> = ({
           Add Course
         </Button>
       </div>
-      <div className="flex gap-2 sm:gap-4 items-center">
+      <div className="flex gap-2 wide:gap-4 items-center">
         <Button
           variant="outline"
           onClick={handleCopyCourses}
