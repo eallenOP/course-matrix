@@ -3,6 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TopControls from '../components/TopControls';
 
+// Mock the lucide-react icons
+jest.mock('lucide-react', () => ({
+  PlusCircle: ({ className }: any) => <div data-testid="plus-icon" className={className} />,
+  Settings: ({ className }: any) => <div data-testid="settings-icon" className={className} />,
+  Copy: ({ className }: any) => <div data-testid="copy-icon" className={className} />,
+}));
+
 // Mock the UI components
 jest.mock('@/components/ui/button', () => ({
   Button: ({ children, onClick, variant, className }: any) => (
@@ -29,7 +36,11 @@ describe('TopControls', () => {
     onAddCourse: jest.fn(),
     isEditingTasks: false,
     onToggleEditTasks: jest.fn(),
-    onResetProgress: jest.fn()
+    onResetProgress: jest.fn(),
+    activeSemester: 'start' as const,
+    currentSemesterCourseCount: 0,
+    otherSemesterCourseCount: 0,
+    onCopyCourses: jest.fn()
   };
 
   beforeEach(() => {

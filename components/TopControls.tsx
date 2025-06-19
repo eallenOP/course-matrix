@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, Copy } from 'lucide-react';
+import { PlusCircle, Settings, Files } from 'lucide-react';
 import { SemesterType } from '../types/course';
 
 interface TopControlsProps {
@@ -64,7 +64,7 @@ const TopControls: React.FC<TopControlsProps> = ({
           className="flex items-center gap-2"
           title={copyTooltip}
         >
-          <Copy className="w-4 h-4" />
+          <span className="text-sm">📋</span>
           Copy to {activeSemester === 'start' ? 'End' : 'Start'}
         </Button>
         <Button

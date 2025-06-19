@@ -223,10 +223,18 @@ describe('useSemesterPersistence - Data Separation', () => {
       result.current.setActiveSemester('start');
     });
 
-    expect(result.current.courses).toEqual([
-      { id: 1, code: 'CS101' },
-      { id: 2, code: 'MATH201' },
-      { id: 3, code: 'PHY301' }
-    ]);
+    // Should have original 2 courses plus the copied PHY301 (with new ID)
+    expect(result.current.courses).toHaveLength(3);
+    const courseCodes = result.current.courses.map(c => c.code);
+    expect(courseCodes).toEqual(['CS101', 'MATH201', 'PHY301']);
+    
+    // Original courses should keep their IDs, but PHY301 should have a new ID
+    const cs101Course = result.current.courses.find(c => c.code === 'CS101');
+    const math201Course = result.current.courses.find(c => c.code === 'MATH201');
+    const phy301Course = result.current.courses.find(c => c.code === 'PHY301');
+    
+    expect(cs101Course?.id).toBe(1);
+    expect(math201Course?.id).toBe(2);
+    expect(phy301Course?.id).not.toBe(3); // Should have new ID
   });
 });

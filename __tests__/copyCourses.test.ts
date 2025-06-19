@@ -56,16 +56,14 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
     expect(result.current.courses[0].code).toBe('CS101');
     expect(result.current.courses[1].code).toBe('MATH201');
 
-    // Switch to end semester (should be empty initially)
-    act(() => {
-      result.current.setActiveSemester('end');
-    });
-
-    expect(result.current.courses).toHaveLength(0);
-
-    // Copy courses from start to end semester
+    // Copy courses from start to end semester (must be called while on start semester)
     act(() => {
       result.current.copyCourses();
+    });
+
+    // Switch to end semester to verify the courses were copied there
+    act(() => {
+      result.current.setActiveSemester('end');
     });
 
     // Verify end semester now has the copied courses
@@ -99,16 +97,14 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
     // Verify end semester has courses
     expect(result.current.courses).toHaveLength(2);
 
-    // Switch to start semester (should be empty initially)
-    act(() => {
-      result.current.setActiveSemester('start');
-    });
-
-    expect(result.current.courses).toHaveLength(0);
-
-    // Copy courses from end to start semester
+    // Copy courses from end to start semester (must be called while on end semester)
     act(() => {
       result.current.copyCourses();
+    });
+
+    // Switch to start semester to verify the courses were copied there
+    act(() => {
+      result.current.setActiveSemester('start');
     });
 
     // Verify start semester now has the copied courses
@@ -140,15 +136,20 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
       ]);
     });
 
-    // Copy courses from start semester (should append)
+    // Copy courses from end to start semester (we're currently on end semester)
     act(() => {
       result.current.copyCourses();
     });
 
-    // Verify both existing and copied courses are present
+    // Switch to start semester to verify the append behavior
+    act(() => {
+      result.current.setActiveSemester('start');
+    });
+
+    // Verify both existing and copied courses are present in start semester
     expect(result.current.courses).toHaveLength(2);
-    expect(result.current.courses.some(c => c.code === 'EXISTING_COURSE')).toBe(true);
     expect(result.current.courses.some(c => c.code === 'CS101')).toBe(true);
+    expect(result.current.courses.some(c => c.code === 'EXISTING_COURSE')).toBe(true);
   });
 
   it('should not duplicate courses that already exist', () => {
@@ -175,12 +176,17 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
       ]);
     });
 
-    // Copy courses from start semester
+    // Copy courses from end to start semester (we're currently on end semester)
     act(() => {
       result.current.copyCourses();
     });
 
-    // Should have CS101 (existing), MATH201 (copied), but not duplicate CS101
+    // Switch to start semester to verify no duplicates
+    act(() => {
+      result.current.setActiveSemester('start');
+    });
+
+    // Should have CS101 (existing), MATH201 (existing), but not duplicate CS101
     expect(result.current.courses).toHaveLength(2);
     expect(result.current.courses.filter(c => c.code === 'CS101')).toHaveLength(1);
     expect(result.current.courses.some(c => c.code === 'MATH201')).toBe(true);
@@ -194,9 +200,20 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
     // Start with no courses in start semester
     expect(result.current.courses).toHaveLength(0);
 
-    // Switch to end semester
+    // Switch to end semester and add some courses
     act(() => {
       result.current.setActiveSemester('end');
+    });
+
+    act(() => {
+      result.current.setCourses([
+        { id: 1, code: 'EXISTING_COURSE' }
+      ]);
+    });
+
+    // Switch back to start semester (which has no courses)
+    act(() => {
+      result.current.setActiveSemester('start');
     });
 
     // Try to copy from start semester (which has no courses)
@@ -204,8 +221,14 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
       result.current.copyCourses();
     });
 
-    // Should still have no courses
-    expect(result.current.courses).toHaveLength(0);
+    // Switch to end semester to verify no changes
+    act(() => {
+      result.current.setActiveSemester('end');
+    });
+
+    // Should still have just the original course
+    expect(result.current.courses).toHaveLength(1);
+    expect(result.current.courses[0].code).toBe('EXISTING_COURSE');
   });
 
   it('should preserve existing task status when copying courses', () => {
@@ -228,15 +251,20 @@ describe('useSemesterPersistence - Copy Courses Functionality', () => {
       result.current.setTaskStatus({ '999-Final Grades-Grade 1': true });
     });
 
-    // Copy courses from start semester
+    // Copy courses from end to start semester (we're currently on end semester)
     act(() => {
       result.current.copyCourses();
     });
 
+    // Switch to start semester to verify task status is preserved
+    act(() => {
+      result.current.setActiveSemester('start');
+    });
+
     // Verify existing task status is preserved
-    expect(result.current.taskStatus['999-Final Grades-Grade 1']).toBe(true);
+    expect(result.current.taskStatus['1-Course Directive-Task 1']).toBe(true);
     
-    // Task status from start semester should not be copied
-    expect(result.current.taskStatus['1-Course Directive-Task 1']).toBeUndefined();
+    // Task status from end semester should not be copied
+    expect(result.current.taskStatus['999-Final Grades-Grade 1']).toBeUndefined();
   });
 });
