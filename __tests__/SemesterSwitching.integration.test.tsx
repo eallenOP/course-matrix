@@ -62,8 +62,14 @@ jest.mock('../components/TopControls', () => {
     onAddCourse,
     isEditingTasks,
     onToggleEditTasks,
-    onResetProgress 
+    onResetProgress,
+    activeSemester,
+    currentSemesterCourseCount,
+    onCopyCourses
   }: any) {
+    const canCopy = currentSemesterCourseCount > 0;
+    const otherSemesterName = activeSemester === 'start' ? 'End' : 'Start';
+    
     return (
       <div data-testid="top-controls">
         <input
@@ -72,6 +78,13 @@ jest.mock('../components/TopControls', () => {
           onChange={(e) => onNewCourseCodeChange(e.target.value)}
         />
         <button onClick={onAddCourse}>Add Course</button>
+        <button 
+          onClick={onCopyCourses}
+          disabled={!canCopy}
+          data-testid="copy-courses-button"
+        >
+          Copy to {otherSemesterName}
+        </button>
         <button onClick={onToggleEditTasks} data-testid="edit-tasks-button">
           {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
         </button>
@@ -296,5 +309,46 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
       expect(screen.getByText('TEST101')).toBeInTheDocument();
       expect(screen.queryByText('TEST401')).not.toBeInTheDocument();
     });
+  });
+
+  it('should copy courses between semesters using the copy button', async () => {
+    render(<CourseMatrix />);
+
+    // Start on start semester and add courses
+    expect(screen.getByText('Start of Semester')).toHaveClass('bg-blue-100');
+
+    // Add courses to start semester
+    const courseInput = screen.getByPlaceholderText('Enter course code');
+    fireEvent.change(courseInput, { target: { value: 'CS101' } });
+    fireEvent.click(screen.getByText('Add Course'));
+
+    await waitFor(() => {
+      expect(screen.getByText('CS101')).toBeInTheDocument();
+    });
+
+    fireEvent.change(courseInput, { target: { value: 'MATH201' } });
+    fireEvent.click(screen.getByText('Add Course'));
+
+    await waitFor(() => {
+      expect(screen.getByText('MATH201')).toBeInTheDocument();
+    });
+
+    // Copy courses to end semester
+    const copyButton = screen.getByTestId('copy-courses-button');
+    expect(copyButton).not.toBeDisabled();
+    fireEvent.click(copyButton);
+
+    // Switch to end semester
+    fireEvent.click(screen.getByText('End of Semester'));
+
+    await waitFor(() => {
+      expect(screen.getByText('End of Semester')).toHaveClass('bg-blue-100');
+      expect(screen.getByText('CS101')).toBeInTheDocument();
+      expect(screen.getByText('MATH201')).toBeInTheDocument();
+    });
+
+    // Verify end semester tasks are displayed (not start semester tasks)
+    expect(screen.getByText('Final Grades')).toBeInTheDocument();
+    expect(screen.queryByText('Course Directive')).not.toBeInTheDocument();
   });
 });
