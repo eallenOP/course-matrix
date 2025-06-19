@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SemesterType, SemesterData, Tasks, Course, TaskStatus } from '../types/course';
+import { safeGetItem, safeSetItem, storage } from '../utils/storage';
+import { validateSemesterData, validateSemesterType, recoverCorruptedData } from '../utils/dataValidation';
 
-// Enhanced hook for multi-semester localStorage persistence
+// Enhanced hook for multi-semester localStorage persistence with error handling
 export function useSemesterPersistence(
   defaultStartTasks: Tasks,
   defaultEndTasks: Tasks
 ) {
   const [activeSemester, setActiveSemester] = useState<SemesterType>('start');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Separate state for each semester
   const [startCourses, setStartCourses] = useState<Course[]>([]);
@@ -18,85 +23,216 @@ export function useSemesterPersistence(
   const [endTasks, setEndTasks] = useState<Tasks>(defaultEndTasks);
   const [endTaskStatus, setEndTaskStatus] = useState<TaskStatus>({});
 
+  // Error handling callback
+  const handleStorageError = useCallback((error: Error) => {
+    setStorageError(`Storage error: ${error.message}`);
+    console.error('Storage operation failed:', error);
+  }, []);
+
+  // Set up error callback
+  useEffect(() => {
+    storage.setErrorCallback(handleStorageError);
+  }, [handleStorageError]);
+
   // Load data from localStorage on mount (only once)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const loadData = async () => {
+      // Safety check for browser environment
+      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+        console.warn('Running in non-browser environment, using defaults');
+        setIsInitialized(true);
+        setIsLoading(false);
+        return;
+      }
+
       try {
+        setIsLoading(true);
+        setStorageError(null);
+
+        // Test storage functionality first
+        if (!storage.testStorage()) {
+          throw new Error('Storage is not functional');
+        }
+
         // Load active semester
-        const savedActiveSemester = localStorage.getItem('courseMatrix_activeSemester');
-        if (savedActiveSemester && (savedActiveSemester === 'start' || savedActiveSemester === 'end')) {
-          setActiveSemester(savedActiveSemester as SemesterType);
+        const activeSemesterResult = safeGetItem<SemesterType>('courseMatrix_activeSemester', {
+          fallback: 'start',
+          onError: handleStorageError
+        });
+        
+        if (activeSemesterResult.success && activeSemesterResult.data) {
+          const semester = activeSemesterResult.data;
+          if (validateSemesterType(semester)) {
+            setActiveSemester(semester);
+          } else {
+            console.warn('Invalid semester type in storage, using default');
+            setActiveSemester('start');
+          }
         }
 
-        // Load start semester data
-        const savedStartData = localStorage.getItem('courseMatrix_startSemester');
-        if (savedStartData) {
-          const parsedStartData = JSON.parse(savedStartData);
-          setStartCourses(parsedStartData.courses || []);
-          setStartTasks(parsedStartData.tasks || defaultStartTasks);
-          setStartTaskStatus(parsedStartData.taskStatus || {});
+        // Load start semester data with validation
+        const startDataResult = safeGetItem<any>('courseMatrix_startSemester', {
+          fallback: null,
+          onError: handleStorageError
+        });
+
+        if (startDataResult.success && startDataResult.data) {
+          try {
+            // Validate and fix the data
+            const validation = validateSemesterData(startDataResult.data, defaultStartTasks);
+            
+            if (validation.warnings.length > 0) {
+              console.warn('Start semester data issues fixed:', validation.warnings);
+              setStorageError(`Data issues were automatically fixed: ${validation.warnings.length} warnings`);
+            }
+            
+            if (validation.isValid || validation.fixedData) {
+              const fixedData = validation.fixedData as SemesterData;
+              setStartCourses(fixedData.courses);
+              setStartTasks(fixedData.tasks);
+              setStartTaskStatus(fixedData.taskStatus);
+            } else {
+              throw new Error('Could not recover start semester data');
+            }
+          } catch (error) {
+            console.error('Failed to validate start semester data:', error);
+            setStorageError('Start semester data was corrupted and has been reset');
+            // Use defaults
+            setStartCourses([]);
+            setStartTasks(defaultStartTasks);
+            setStartTaskStatus({});
+          }
+        } else {
+          // No data found or error, use defaults
+          setStartCourses([]);
+          setStartTasks(defaultStartTasks);
+          setStartTaskStatus({});
         }
 
-        // Load end semester data
-        const savedEndData = localStorage.getItem('courseMatrix_endSemester');
-        if (savedEndData) {
-          const parsedEndData = JSON.parse(savedEndData);
-          setEndCourses(parsedEndData.courses || []);
-          setEndTasks(parsedEndData.tasks || defaultEndTasks);
-          setEndTaskStatus(parsedEndData.taskStatus || {});
+        // Load end semester data with validation
+        const endDataResult = safeGetItem<any>('courseMatrix_endSemester', {
+          fallback: null,
+          onError: handleStorageError
+        });
+
+        if (endDataResult.success && endDataResult.data) {
+          try {
+            // Validate and fix the data
+            const validation = validateSemesterData(endDataResult.data, defaultEndTasks);
+            
+            if (validation.warnings.length > 0) {
+              console.warn('End semester data issues fixed:', validation.warnings);
+              if (!storageError) { // Don't override existing errors
+                setStorageError(`Data issues were automatically fixed: ${validation.warnings.length} warnings`);
+              }
+            }
+            
+            if (validation.isValid || validation.fixedData) {
+              const fixedData = validation.fixedData as SemesterData;
+              setEndCourses(fixedData.courses);
+              setEndTasks(fixedData.tasks);
+              setEndTaskStatus(fixedData.taskStatus);
+            } else {
+              throw new Error('Could not recover end semester data');
+            }
+          } catch (error) {
+            console.error('Failed to validate end semester data:', error);
+            setStorageError('End semester data was corrupted and has been reset');
+            // Use defaults
+            setEndCourses([]);
+            setEndTasks(defaultEndTasks);
+            setEndTaskStatus({});
+          }
+        } else {
+          // No data found or error, use defaults
+          setEndCourses([]);
+          setEndTasks(defaultEndTasks);
+          setEndTaskStatus({});
         }
+
       } catch (error) {
-        console.warn('Failed to load data from localStorage:', error);
+        const err = error as Error;
+        handleStorageError(err);
+        console.warn('Failed to load data, using defaults:', err.message);
       } finally {
         setIsInitialized(true);
+        setIsLoading(false);
       }
-    } else {
-      setIsInitialized(true);
-    }
+    };
+
+    loadData();
   }, []); // Empty dependency array - only run once!
 
   // Save active semester when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('courseMatrix_activeSemester', activeSemester);
-      } catch (error) {
-        console.warn('Failed to save active semester to localStorage:', error);
-      }
+      const saveActiveSemester = async () => {
+        const result = await safeSetItem('courseMatrix_activeSemester', activeSemester, {
+          onError: handleStorageError
+        });
+        
+        if (result.success) {
+          setLastSaved(new Date());
+        } else {
+          setStorageError(result.error || 'Failed to save active semester');
+        }
+      };
+      
+      saveActiveSemester();
     }
-  }, [activeSemester, isInitialized]);
+  }, [activeSemester, isInitialized, handleStorageError]);
 
   // Save start semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
-      try {
-        const startData = {
+      const saveStartData = async () => {
+        const startData: SemesterData = {
           courses: startCourses,
           tasks: startTasks,
           taskStatus: startTaskStatus
         };
-        localStorage.setItem('courseMatrix_startSemester', JSON.stringify(startData));
-      } catch (error) {
-        console.warn('Failed to save start semester data to localStorage:', error);
-      }
+        
+        const result = await safeSetItem('courseMatrix_startSemester', startData, {
+          onError: handleStorageError
+        });
+        
+        if (result.success) {
+          setLastSaved(new Date());
+          setStorageError(null); // Clear any previous errors
+        } else {
+          setStorageError(result.error || 'Failed to save start semester data');
+        }
+      };
+      
+      saveStartData();
     }
-  }, [startCourses, startTasks, startTaskStatus, isInitialized]);
+  }, [startCourses, startTasks, startTaskStatus, isInitialized, handleStorageError]);
 
   // Save end semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
-      try {
-        const endData = {
+      const saveEndData = async () => {
+        const endData: SemesterData = {
           courses: endCourses,
           tasks: endTasks,
           taskStatus: endTaskStatus
         };
-        localStorage.setItem('courseMatrix_endSemester', JSON.stringify(endData));
-      } catch (error) {
-        console.warn('Failed to save end semester data to localStorage:', error);
-      }
+        
+        const result = await safeSetItem('courseMatrix_endSemester', endData, {
+          onError: handleStorageError
+        });
+        
+        if (result.success) {
+          setLastSaved(new Date());
+          setStorageError(null); // Clear any previous errors
+        } else {
+          setStorageError(result.error || 'Failed to save end semester data');
+        }
+      };
+      
+      saveEndData();
     }
-  }, [endCourses, endTasks, endTaskStatus, isInitialized]);
+  }, [endCourses, endTasks, endTaskStatus, isInitialized, handleStorageError]);
 
   // Helper functions to update semester data
   const updateCourses = (courses: Course[]) => {
@@ -165,5 +301,10 @@ export function useSemesterPersistence(
     setTaskStatus: updateTaskStatus,
     copyCourses,
     otherSemesterCourses: otherSemesterData.courses,
+    // New state for error handling and loading
+    isLoading,
+    storageError,
+    lastSaved,
+    clearStorageError: () => setStorageError(null),
   };
 }
