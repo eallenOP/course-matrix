@@ -21,7 +21,8 @@ jest.mock('lucide-react', () => ({
   PlusCircle: () => <span data-testid="plus-icon">+</span>,
   Settings: () => <span data-testid="settings-icon">⚙</span>,
   Copy: () => <span data-testid="copy-icon">📋</span>,
-  Check: () => <span data-testid="check-icon">✓</span>
+  Check: () => <span data-testid="check-icon">✓</span>,
+  Download: () => <span data-testid="download-icon">⬇</span>
 }));
 
 describe('TopControls', () => {
@@ -35,7 +36,11 @@ describe('TopControls', () => {
     activeSemester: 'start' as const,
     currentSemesterCourseCount: 0,
     otherSemesterCourseCount: 0,
-    onCopyCourses: jest.fn()
+    onCopyCourses: jest.fn(),
+    tasks: {
+      'Course Directive': ['Task 1', 'Task 2'],
+      'Moodle': ['Task A', 'Task B']
+    }
   };
 
   beforeEach(() => {
@@ -47,6 +52,7 @@ describe('TopControls', () => {
     
     expect(screen.getByPlaceholderText('Course Code')).toBeInTheDocument();
     expect(screen.getByText('Add Course')).toBeInTheDocument();
+    expect(screen.getByText('Download Tasks')).toBeInTheDocument();
     expect(screen.getByText('Edit Tasks')).toBeInTheDocument();
     expect(screen.getByText('Reset Progress')).toBeInTheDocument();
   });
@@ -110,15 +116,16 @@ describe('TopControls', () => {
     render(<TopControls {...defaultProps} />);
     
     expect(screen.getByTestId('plus-icon')).toBeInTheDocument();
-    expect(screen.getByTestId('settings-icon')).toBeInTheDocument();
     expect(screen.getByTestId('copy-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('download-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-icon')).toBeInTheDocument();
   });
 
   it('should apply correct button variants', () => {
     render(<TopControls {...defaultProps} />);
     
-    const editButton = screen.getByText('Edit Tasks');
-    const resetButton = screen.getByText('Reset Progress');
+    const editButton = screen.getByText('Edit Tasks').closest('button');
+    const resetButton = screen.getByText('Reset Progress').closest('button');
     
     expect(editButton).toHaveAttribute('data-variant', 'outline');
     expect(resetButton).toHaveAttribute('data-variant', 'destructive');
@@ -128,7 +135,7 @@ describe('TopControls', () => {
     render(<TopControls {...defaultProps} />);
     
     const container = screen.getByText('Add Course').closest('div');
-    expect(container?.parentElement).toHaveClass('flex', 'justify-between', 'mb-8', 'items-center');
+    expect(container?.parentElement).toHaveClass('flex', 'flex-col', 'sm:flex-row', 'sm:justify-between', 'mb-8', 'gap-4', 'sm:items-center');
   });
 
   it('should call onAddCourse when Enter key is pressed in course code input', () => {
@@ -166,5 +173,13 @@ describe('TopControls', () => {
     expect(screen.getByText('Copied!')).toBeInTheDocument();
     expect(screen.getByTestId('check-icon')).toBeInTheDocument();
     expect(defaultProps.onCopyCourses).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render download button', () => {
+    render(<TopControls {...defaultProps} />);
+    
+    const downloadButton = screen.getByText('Download Tasks');
+    expect(downloadButton).toBeInTheDocument();
+    expect(screen.getByTestId('download-icon')).toBeInTheDocument();
   });
 });

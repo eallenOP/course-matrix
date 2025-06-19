@@ -135,6 +135,7 @@ const CourseMatrix = () => {
         currentSemesterCourseCount={courses.length}
         otherSemesterCourseCount={otherSemesterCourses.length}
         onCopyCourses={copyCourses}
+        tasks={tasks}
       />
 
       {/* Task editor */}
