@@ -2,15 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Aldrich&display=swap');
-
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Stargate heading styling only for dark mode */
 .dark .heading-stargate {
-  font-family: 'Aldrich', monospace;
+  font-family: var(--font-aldrich), monospace;
   color: #ecf0e0;
   text-transform: uppercase;
 }
