@@ -8,6 +8,7 @@ import Legend from './Legend';
 import SemesterTabs from './SemesterTabs';
 import SaveIndicator from './SaveIndicator';
 import ErrorAlert from './ErrorAlert';
+import ThemeToggle from './ThemeToggle';
 import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { progressCalculations } from '../utils/progressCalculations';
 import { resetTaskStatuses } from '../utils/taskActions';
@@ -128,7 +129,10 @@ const CourseMatrix = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Course Preparation Matrix</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold heading-stargate">Course Preparation Matrix</h1>
+        <ThemeToggle />
+      </div>
 
       {/* Error Alert - only show when there's an error */}
       {storageError && (

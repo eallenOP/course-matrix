@@ -2,6 +2,15 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CourseMatrix from '../components/CourseMatrix';
+import { ThemeProvider } from '../contexts/ThemeContext';
+
+// Test wrapper component
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ThemeProvider>{children}</ThemeProvider>
+);
+
+// Helper function to render CourseMatrix with ThemeProvider
+const renderCourseMatrix = () => render(<CourseMatrix />, { wrapper: TestWrapper });
 
 // Mock all the child components
 jest.mock('../components/TaskEditor', () => {
@@ -104,6 +113,12 @@ jest.mock('../components/Legend', () => {
   };
 });
 
+jest.mock('../components/ThemeToggle', () => {
+  return function MockThemeToggle() {
+    return <button data-testid="theme-toggle">Theme Toggle</button>;
+  };
+});
+
 // Mock the localStorage hook
 jest.mock('../hooks/useLocalStoragePersistence', () => ({
   useCourseMatrixPersistence: () => ({
@@ -139,7 +154,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should render all main components', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     expect(screen.getByText('Course Preparation Matrix')).toBeInTheDocument();
     expect(screen.getByTestId('top-controls')).toBeInTheDocument();
@@ -148,7 +163,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should handle course addition workflow', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     const input = screen.getByTestId('course-input');
     const addButton = screen.getByTestId('add-course');
@@ -161,7 +176,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should toggle task editing mode', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     const toggleButton = screen.getByTestId('toggle-edit');
     
@@ -182,7 +197,7 @@ describe('CourseMatrix Integration', () => {
   it('should handle reset progress action', () => {
     const { resetTaskStatuses } = require('../utils/taskActions');
     
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     const resetButton = screen.getByTestId('reset-progress');
     fireEvent.click(resetButton);
@@ -191,7 +206,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should pass correct props to child components', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     // Check that Matrix Table receives task types
     expect(screen.getByTestId('task-type-Course Directive')).toBeInTheDocument();
@@ -203,7 +218,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should handle task status toggling', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     const toggleButton = screen.getByTestId('mock-toggle-status');
     fireEvent.click(toggleButton);
@@ -214,7 +229,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should maintain proper component hierarchy', () => {
-    const { container } = render(<CourseMatrix />);
+    const { container } = renderCourseMatrix();
     
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('p-6', 'max-w-6xl', 'mx-auto');
@@ -229,7 +244,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should handle empty course addition', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     const addButton = screen.getByTestId('add-course');
     
@@ -241,7 +256,7 @@ describe('CourseMatrix Integration', () => {
   });
 
   it('should show task editor only when editing is enabled', () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
     
     // Initially hidden
     expect(screen.queryByTestId('task-editor')).not.toBeInTheDocument();

@@ -6,6 +6,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Stargate heading styling only for dark mode */
+.dark .heading-stargate {
+  font-family: var(--font-aldrich), monospace;
+  color: #ecf0e0;
+  text-transform: uppercase;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -35,30 +42,43 @@ body {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Stargate SG-1 authentic color scheme */
+    --sg-primary: #d4ffff;
+    --sg-secondary: #0c4e40;
+    --sg-accent: #ecf0e0;
+    --sg-panel: #094b3f;
+    --sg-dark: #001122;
+    --sg-darker: #000a11;
+    --sg-border: #d4ffff;
+    --sg-text: #ccffff;
+    --sg-orange: #ff6600;
+    --sg-green: #00ff88;
+    
+    /* Map to Tailwind variables */
+    --background: 210 100% 7%; /* sg-dark */
+    --foreground: 180 100% 90%; /* sg-text */
+    --card: 180 65% 16%; /* sg-panel */
+    --card-foreground: 180 100% 90%; /* sg-text */
+    --popover: 180 65% 16%; /* sg-panel */
+    --popover-foreground: 180 100% 90%; /* sg-text */
+    --primary: 180 100% 91%; /* sg-primary */
+    --primary-foreground: 210 100% 7%; /* sg-dark */
+    --secondary: 180 65% 16%; /* sg-panel */
+    --secondary-foreground: 180 100% 90%; /* sg-text */
+    --muted: 180 65% 18%; /* sg-secondary */
+    --muted-foreground: 180 100% 80%; /* dimmed sg-text */
+    --accent: 180 65% 16%; /* sg-panel */
+    --accent-foreground: 180 100% 90%; /* sg-text */
+    --destructive: 16 100% 50%; /* sg-orange */
+    --destructive-foreground: 180 100% 90%; /* sg-text */
+    --border: 180 100% 91%; /* sg-border */
+    --input: 210 100% 3%; /* sg-darker */
+    --ring: 180 100% 91%; /* sg-primary */
+    --chart-1: 180 100% 91%; /* sg-primary */
+    --chart-2: 150 100% 50%; /* sg-green */
+    --chart-3: 16 100% 50%; /* sg-orange */
+    --chart-4: 180 100% 80%; /* lighter sg-text */
+    --chart-5: 180 65% 18%; /* sg-secondary */
   }
 }
 
@@ -68,5 +88,45 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Ensure inputs have proper dark styling in dark mode */
+  .dark input {
+    background-color: hsl(var(--input));
+    color: hsl(var(--foreground));
+  }
+  
+  .dark input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+  
+  /* Make reset progress button (destructive variant) a ghost button in dark mode */
+  .dark .bg-destructive {
+    background-color: transparent !important;
+    border: 1px solid #ff6600;
+    color: #ff6600;
+  }
+  
+  .dark .bg-destructive:hover {
+    background-color: rgba(255, 102, 0, 0.1) !important;
+    border-color: #ff6600;
+    color: #ff6600;
+  }
+  
+  /* Fix table row backgrounds in dark mode */
+  .dark .bg-gray-50 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  .dark .hover\:bg-gray-50:hover {
+    background-color: hsl(var(--accent)) !important;
+  }
+  
+  .dark .hover\:bg-gray-100:hover {
+    background-color: hsl(var(--accent)) !important;
+  }
+  
+  .dark .hover\:bg-gray-200:hover {
+    background-color: hsl(var(--secondary)) !important;
   }
 }

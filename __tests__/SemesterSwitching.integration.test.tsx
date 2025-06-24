@@ -2,6 +2,15 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CourseMatrix from '../components/CourseMatrix';
+import { ThemeProvider } from '../contexts/ThemeContext';
+
+// Test wrapper component
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ThemeProvider>{children}</ThemeProvider>
+);
+
+// Helper function to render CourseMatrix with ThemeProvider
+const renderCourseMatrix = () => render(<CourseMatrix />, { wrapper: TestWrapper });
 
 // Mock all the child components to avoid lucide-react issues
 jest.mock('../components/TaskEditor', () => {
@@ -100,6 +109,12 @@ jest.mock('../components/Legend', () => {
   };
 });
 
+jest.mock('../components/ThemeToggle', () => {
+  return function MockThemeToggle() {
+    return <button data-testid="theme-toggle">Theme Toggle</button>;
+  };
+});
+
 jest.mock('../components/SemesterTabs', () => {
   return function MockSemesterTabs({ activeSemester, onSemesterChange }: any) {
     return (
@@ -155,7 +170,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
   });
 
   it('should handle complete semester switching workflow', async () => {
-    const { rerender } = render(<CourseMatrix />);
+    const { rerender } = render(<CourseMatrix />, { wrapper: TestWrapper });
 
     // Initially should be on start semester
     expect(screen.getByText('Start of Semester')).toHaveClass('bg-blue-100');
@@ -218,6 +233,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     expect(screen.queryByText('EBS')).not.toBeInTheDocument();
 
     // Test persistence by re-rendering (simulating page refresh)
+    // The rerender should maintain the same wrapper
     rerender(<CourseMatrix />);
 
     await waitFor(() => {
@@ -236,7 +252,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
   });
 
   it('should handle task editing independently for each semester', async () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
 
     // Start on start semester
     expect(screen.getByText('Course Directive')).toBeInTheDocument();
@@ -274,7 +290,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
   });
 
   it('should handle progress calculations independently', async () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
 
     // Add course to start semester
     const courseInput = screen.getByPlaceholderText('Enter course code');
@@ -311,7 +327,7 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
   });
 
   it('should copy courses between semesters using the copy button', async () => {
-    render(<CourseMatrix />);
+    renderCourseMatrix();
 
     // Start on start semester and add courses
     expect(screen.getByText('Start of Semester')).toHaveClass('bg-blue-100');
