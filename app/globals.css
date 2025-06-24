@@ -114,4 +114,21 @@ body {
     border-color: #ff6600;
     color: #ff6600;
   }
+  
+  /* Fix table row backgrounds in dark mode */
+  .dark .bg-gray-50 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  .dark .hover\:bg-gray-50:hover {
+    background-color: hsl(var(--accent)) !important;
+  }
+  
+  .dark .hover\:bg-gray-100:hover {
+    background-color: hsl(var(--accent)) !important;
+  }
+  
+  .dark .hover\:bg-gray-200:hover {
+    background-color: hsl(var(--secondary)) !important;
+  }
 }
