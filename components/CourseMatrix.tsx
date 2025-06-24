@@ -130,7 +130,7 @@ const CourseMatrix = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Course Preparation Matrix</h1>
+        <h1 className="text-2xl font-bold heading-stargate">Course Preparation Matrix</h1>
         <ThemeToggle />
       </div>
 

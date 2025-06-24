@@ -16,12 +16,29 @@ const ThemeToggle: React.FC = () => {
     setTheme(themes[nextIndex]);
   };
 
+  // Stargate icon component
+  const StargateIcon = () => (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <path d="M12 3v2" />
+      <path d="M12 19v2" />
+      <path d="M3 12h2" />
+      <path d="M19 12h2" />
+      <path d="M6.34 6.34l1.42 1.42" />
+      <path d="M16.24 16.24l1.42 1.42" />
+      <path d="M6.34 17.66l1.42-1.42" />
+      <path d="M16.24 7.76l1.42-1.42" />
+    </svg>
+  );
+
   const getIcon = () => {
     switch (theme) {
       case 'light':
         return <Sun className="h-4 w-4" />;
       case 'dark':
-        return <Moon className="h-4 w-4" />;
+        return <StargateIcon />;
       case 'system':
         return <Monitor className="h-4 w-4" />;
       default:
@@ -32,7 +49,7 @@ const ThemeToggle: React.FC = () => {
   const getTooltip = () => {
     switch (theme) {
       case 'light':
-        return 'Switch to dark mode';
+        return 'Switch to dark mode (Stargate mode)';
       case 'dark':
         return 'Switch to system mode';
       case 'system':
