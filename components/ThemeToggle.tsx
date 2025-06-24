@@ -43,15 +43,13 @@ const ThemeToggle: React.FC = () => {
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
+    <button
       onClick={cycleTheme}
       title={getTooltip()}
-      className="w-9 h-9 p-0"
+      className="w-9 h-9 p-0 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent hover:border hover:border-border transition-all duration-200"
     >
       {getIcon()}
-    </Button>
+    </button>
   );
 };
 
