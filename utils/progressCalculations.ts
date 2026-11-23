@@ -1,5 +1,13 @@
 import { Course, TaskStatus, Tasks } from '../types/course';
 
+// Everything N/A counts as done; nothing to do at all is 0. Unfinished work never
+// rounds up to 100, so 100 always means done.
+const toPercent = (completed: number, total: number, notApplicable: number): number => {
+  if (total === 0) return notApplicable > 0 ? 100 : 0;
+  if (completed === total) return 100;
+  return Math.min(99, Math.round((completed / total) * 100));
+};
+
 export const progressCalculations = {
   /**
    * Calculate overall progress for a specific task type across all courses
@@ -16,6 +24,7 @@ export const progressCalculations = {
     taskStatus: TaskStatus
   ): number => {
     let total = 0;
+    let notApplicable = 0;
     let completed = 0;
 
     courses.forEach(course => {
@@ -26,11 +35,13 @@ export const progressCalculations = {
           if (status === true) {
             completed++;
           }
+        } else {
+          notApplicable++;
         }
       });
     });
 
-    return total === 0 ? 0 : Math.round((completed / total) * 100);
+    return toPercent(completed, total, notApplicable);
   },
 
   /**
@@ -48,6 +59,7 @@ export const progressCalculations = {
     taskStatus: TaskStatus
   ): number => {
     let totalActiveTasks = 0;
+    let notApplicable = 0;
     let completedTasks = 0;
 
     tasks[taskType].forEach(subtask => {
@@ -57,10 +69,12 @@ export const progressCalculations = {
         if (status === true) {
           completedTasks++;
         }
+      } else {
+        notApplicable++;
       }
     });
 
-    return totalActiveTasks === 0 ? 0 : Math.round((completedTasks / totalActiveTasks) * 100);
+    return toPercent(completedTasks, totalActiveTasks, notApplicable);
   },
 
   /**
@@ -76,6 +90,7 @@ export const progressCalculations = {
     taskStatus: TaskStatus
   ): number => {
     let total = 0;
+    let notApplicable = 0;
     let completed = 0;
 
     Object.keys(tasks).forEach(taskType => {
@@ -86,10 +101,12 @@ export const progressCalculations = {
           if (status === true) {
             completed++;
           }
+        } else {
+          notApplicable++;
         }
       });
     });
 
-    return total === 0 ? 0 : Math.round((completed / total) * 100);
+    return toPercent(completed, total, notApplicable);
   }
 };

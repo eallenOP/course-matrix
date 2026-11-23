@@ -10,9 +10,9 @@ interface MatrixTableProps {
   courses: Course[];
   tasks: Tasks;
   taskStatus: TaskStatus;
-  expandedTask: string | null;
+  expandedTasks: string[];
   hoveredCourse: number | null;
-  onExpandTask: (taskType: string | null) => void;
+  onToggleExpanded: (taskType: string) => void;
   onRemoveCourse: (courseId: number) => void;
   onToggleStatus: (courseId: number, taskType: string, subtask: string) => void;
   onCourseHover: (courseId: number | null) => void;
@@ -25,9 +25,9 @@ const MatrixTable: React.FC<MatrixTableProps> = ({
   courses,
   tasks,
   taskStatus,
-  expandedTask,
+  expandedTasks,
   hoveredCourse,
-  onExpandTask,
+  onToggleExpanded,
   onRemoveCourse,
   onToggleStatus,
   onCourseHover,
@@ -40,6 +40,15 @@ const MatrixTable: React.FC<MatrixTableProps> = ({
     if (status === 'na') return <Minus className="w-5 h-5 text-gray-400 mx-auto" />;
     return <Circle className="w-5 h-5 text-gray-300 mx-auto" />;
   };
+
+  const renderProgress = (percent: number) => percent === 100
+    ? (
+      <span className="inline-flex items-center gap-1 font-medium text-green-600 dark:text-green-400">
+        <CheckCircle2 className="w-4 h-4" />
+        Done
+      </span>
+    )
+    : `${percent}%`;
 
   if (courses.length === 0) {
     return (
@@ -73,7 +82,7 @@ const MatrixTable: React.FC<MatrixTableProps> = ({
                         {course.code}
                       </div>
                       <div className="col-span-2 text-xs text-gray-500 text-center">
-                        {calculateCourseProgress(course.id)}%
+                        {renderProgress(calculateCourseProgress(course.id))}
                       </div>
                       
                       {/* Positioned X button in the corner */}
@@ -102,25 +111,27 @@ const MatrixTable: React.FC<MatrixTableProps> = ({
                   <tr className="bg-gray-50">
                     <td
                       className="p-3 font-medium cursor-pointer hover:bg-gray-100"
-                      onClick={() => onExpandTask(expandedTask === taskType ? null : taskType)}
+                      onClick={() => onToggleExpanded(taskType)}
                     >
                       <div className="flex justify-between items-center">
                         <span>{taskType}</span>
                         <span className="text-sm text-gray-500">
-                          {calculateTaskProgress(taskType)}%
+                          {renderProgress(calculateTaskProgress(taskType))}
                         </span>
                       </div>
                     </td>
-                    {courses.map(course => (
-                      <td key={course.id} className="p-3 text-center border-l">
-                        <Progress
-                          value={calculateCourseTaskProgress(course.id, taskType)}
-                          className="h-2"
-                        />
-                      </td>
-                    ))}
+                    {courses.map(course => {
+                      const percent = calculateCourseTaskProgress(course.id, taskType);
+                      return (
+                        <td key={course.id} className="p-3 text-center border-l">
+                          {percent === 100
+                            ? <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />
+                            : <Progress value={percent} className="h-2" />}
+                        </td>
+                      );
+                    })}
                   </tr>
-                  {expandedTask === taskType && subtasks.map(subtask => (
+                  {expandedTasks.includes(taskType) && subtasks.map(subtask => (
                     <tr key={subtask} className="border-b last:border-b-0">
                       <td className="p-3 pl-6 text-sm">{subtask}</td>
                       {courses.map(course => (

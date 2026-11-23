@@ -11,7 +11,6 @@ import ErrorAlert from './ErrorAlert';
 import ThemeToggle from './ThemeToggle';
 import { useSemesterPersistence } from '../hooks/useSemesterPersistence';
 import { progressCalculations } from '../utils/progressCalculations';
-import { resetTaskStatuses } from '../utils/taskActions';
 import { Course, Tasks, SemesterType } from '../types/course';
 
 const CourseMatrix = () => {
@@ -73,13 +72,15 @@ const CourseMatrix = () => {
     otherSemesterCourses,
     isLoading,
     storageError,
+    loadWarning,
+    clearLoadWarning,
     lastSaved,
     clearStorageError
   } = useSemesterPersistence(defaultStartTasks, defaultEndTasks);
 
   // Local UI state
   const [newCourseCode, setNewCourseCode] = useState<string>('');
-  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
   const [isEditingTasks, setIsEditingTasks] = useState<boolean>(false);
   const [hoveredCourse, setHoveredCourse] = useState<number | null>(null);
 
@@ -110,9 +111,17 @@ const CourseMatrix = () => {
     }
   };
 
-  // Handle reset all task statuses
-  const handleResetProgress = () => {
-    resetTaskStatuses(courses, tasks, setTaskStatus);
+  // Clear the active semester's progress, and optionally its courses, for a new run
+  const startFresh = (keepCourses: boolean) => {
+    setTaskStatus({});
+    if (!keepCourses) setCourses([]);
+  };
+
+  const toggleExpanded = (taskType: string) => {
+    setExpandedTasks(prev => prev.includes(taskType)
+      ? prev.filter(expanded => expanded !== taskType)
+      : [...prev, taskType]
+    );
   };
 
   // Show loading screen only on very initial load (when we have no data at all)
@@ -142,6 +151,8 @@ const CourseMatrix = () => {
         />
       )}
 
+      {loadWarning && <ErrorAlert error={loadWarning} onDismiss={clearLoadWarning} />}
+
       {/* Semester tabs */}
       <SemesterTabs
         activeSemester={activeSemester}
@@ -150,12 +161,14 @@ const CourseMatrix = () => {
 
       {/* Top controls */}
       <TopControls
+        key={activeSemester}
         newCourseCode={newCourseCode}
         onNewCourseCodeChange={setNewCourseCode}
         onAddCourse={addCourse}
         isEditingTasks={isEditingTasks}
         onToggleEditTasks={() => setIsEditingTasks(!isEditingTasks)}
-        onResetProgress={handleResetProgress}
+        onStartFresh={startFresh}
+        onImportTasks={setTasks}
         activeSemester={activeSemester}
         currentSemesterCourseCount={courses.length}
         otherSemesterCourseCount={otherSemesterCourses.length}
@@ -176,9 +189,9 @@ const CourseMatrix = () => {
         courses={courses}
         tasks={tasks}
         taskStatus={taskStatus}
-        expandedTask={expandedTask}
+        expandedTasks={expandedTasks}
         hoveredCourse={hoveredCourse}
-        onExpandTask={setExpandedTask}
+        onToggleExpanded={toggleExpanded}
         onRemoveCourse={removeCourse}
         onToggleStatus={toggleStatus}
         onCourseHover={setHoveredCourse}

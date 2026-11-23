@@ -51,9 +51,9 @@ describe('MatrixTable', () => {
     courses: mockCourses,
     tasks: mockTasks,
     taskStatus: mockTaskStatus,
-    expandedTask: null,
+    expandedTasks: [] as string[],
     hoveredCourse: null,
-    onExpandTask: jest.fn(),
+    onToggleExpanded: jest.fn(),
     onRemoveCourse: jest.fn(),
     onToggleStatus: jest.fn(),
     onCourseHover: jest.fn(),
@@ -109,14 +109,14 @@ describe('MatrixTable', () => {
     const taskTypeA = screen.getByText('Task Type A');
     await user.click(taskTypeA);
 
-    expect(mockProps.onExpandTask).toHaveBeenCalledWith('Task Type A');
+    expect(mockProps.onToggleExpanded).toHaveBeenCalledWith('Task Type A');
   });
 
   it('should display subtasks when task is expanded', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Task Type A"
+        expandedTasks={['Task Type A']}
       />
     );
 
@@ -129,7 +129,7 @@ describe('MatrixTable', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask={null}
+        expandedTasks={[]}
       />
     );
 
@@ -142,7 +142,7 @@ describe('MatrixTable', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Task Type A"
+        expandedTasks={['Task Type A']}
       />
     );
 
@@ -165,7 +165,7 @@ describe('MatrixTable', () => {
     render(
       <MatrixTable
         {...mockProps}
-        expandedTask="Task Type A"
+        expandedTasks={['Task Type A']}
       />
     );
 
@@ -249,5 +249,25 @@ describe('MatrixTable', () => {
     expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Task Type A');
     expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(1, 'Task Type B');
     expect(mockProps.calculateCourseTaskProgress).toHaveBeenCalledWith(2, 'Task Type B');
+  });
+
+  it('can show several expanded sections at once', () => {
+    render(<MatrixTable {...mockProps} expandedTasks={['Task Type A', 'Task Type B']} />);
+    expect(screen.getByText('Subtask A1')).toBeTruthy();
+    expect(screen.getByText('Subtask B1')).toBeTruthy();
+  });
+
+  it('marks only completed sections and courses as done', () => {
+    render(
+      <MatrixTable
+        {...mockProps}
+        calculateTaskProgress={(taskType) => taskType === 'Task Type A' ? 100 : 99}
+        calculateCourseProgress={(id) => id === 1 ? 100 : 80}
+        calculateCourseTaskProgress={() => 100}
+      />
+    );
+    expect(screen.getAllByText('Done')).toHaveLength(2);
+    expect(screen.getByText('99%')).toBeTruthy();
+    expect(screen.queryByTestId('progress')).toBeNull();
   });
 });

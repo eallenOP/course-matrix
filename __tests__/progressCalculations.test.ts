@@ -155,7 +155,7 @@ describe('progressCalculations', () => {
       expect(result).toBe(100); // 1 completed out of 1 applicable task
     });
 
-    it('should return 0 when all tasks are N/A', () => {
+    it('should count as done when all tasks are N/A', () => {
       const taskStatus: TaskStatus = {
         '1-Course Directive-Task 1': 'na',
         '1-Course Directive-Task 2': 'na'
@@ -167,7 +167,7 @@ describe('progressCalculations', () => {
         mockTasks,
         taskStatus
       );
-      expect(result).toBe(0);
+      expect(result).toBe(100);
     });
   });
 
@@ -223,5 +223,20 @@ describe('progressCalculations', () => {
       const result = progressCalculations.calculateCourseProgress(1, mockTasks, taskStatus);
       expect(result).toBe(100); // 2 completed out of 2 applicable tasks
     });
+  });
+
+  it('counts all-N/A as done at task and course level, but an empty list as 0', () => {
+    const courses = [{ id: 1, code: 'A' }];
+    const tasks = { T: ['x'] };
+    const status: TaskStatus = { '1-T-x': 'na' };
+    expect(progressCalculations.calculateTaskProgress('T', courses, tasks, status)).toBe(100);
+    expect(progressCalculations.calculateCourseProgress(1, tasks, status)).toBe(100);
+    expect(progressCalculations.calculateCourseTaskProgress(1, 'T', { T: [] }, {})).toBe(0);
+  });
+
+  it('never rounds unfinished work up to 100', () => {
+    const names = Array.from({ length: 300 }, (_, i) => `t${i}`);
+    const status: TaskStatus = Object.fromEntries(names.slice(1).map(n => [`1-T-${n}`, true]));
+    expect(progressCalculations.calculateCourseProgress(1, { T: names }, status)).toBe(99);
   });
 });

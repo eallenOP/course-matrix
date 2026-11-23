@@ -71,7 +71,7 @@ jest.mock('../components/TopControls', () => {
     onAddCourse,
     isEditingTasks,
     onToggleEditTasks,
-    onResetProgress,
+    onStartFresh,
     activeSemester,
     currentSemesterCourseCount,
     onCopyCourses
@@ -97,7 +97,8 @@ jest.mock('../components/TopControls', () => {
         <button onClick={onToggleEditTasks} data-testid="edit-tasks-button">
           {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
         </button>
-        <button onClick={onResetProgress}>Reset Progress</button>
+        <button onClick={() => onStartFresh(true)}>Fresh keep</button>
+        <button onClick={() => onStartFresh(false)}>Fresh clear</button>
       </div>
     );
   };
@@ -365,5 +366,24 @@ describe('CourseMatrix - Full Semester Switching Integration', () => {
     // Verify end semester tasks are displayed (not start semester tasks)
     expect(screen.getByText('EBS')).toBeInTheDocument();
     expect(screen.queryByText('Course Directive')).not.toBeInTheDocument();
+  });
+
+  it('starts fresh in the active semester only', async () => {
+    renderCourseMatrix();
+    const saved = (key: string) => JSON.parse(localStorageMock.getItem(`courseMatrix_${key}Semester`)!);
+    fireEvent.change(screen.getByPlaceholderText('Enter course code'), { target: { value: 'CS101' } });
+    fireEvent.click(screen.getByText('Add Course'));
+    fireEvent.click(screen.getByTestId('copy-courses-button'));
+    fireEvent.click(screen.getByText('Toggle Task'));
+    await waitFor(() => expect(Object.values(saved('start').taskStatus)).toEqual([true]));
+    const tasks = saved('start').tasks;
+
+    fireEvent.click(screen.getByText('Fresh keep'));
+    await waitFor(() => expect(saved('start').taskStatus).toEqual({}));
+    expect(saved('start').courses).toHaveLength(1);
+
+    fireEvent.click(screen.getByText('Fresh clear'));
+    await waitFor(() => expect(saved('start')).toEqual({ courses: [], tasks, taskStatus: {} }));
+    expect(saved('end').courses).toHaveLength(1);
   });
 });
