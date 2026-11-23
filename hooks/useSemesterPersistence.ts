@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SemesterType, SemesterData, Tasks, Course, TaskStatus } from '../types/course';
 import { safeGetItem, safeSetItem, storage } from '../utils/storage';
-import { validateSemesterData, validateSemesterType, recoverCorruptedData } from '../utils/dataValidation';
+import { ValidationResult, validateSemesterData, validateSemesterType } from '../utils/dataValidation';
 
 // Enhanced hook for multi-semester localStorage persistence with error handling
 export function useSemesterPersistence(
@@ -12,6 +12,10 @@ export function useSemesterPersistence(
   const [isInitialized, setIsInitialized] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Kept apart from storageError, which the next successful save clears
+  const [loadWarning, setLoadWarning] = useState<string | null>(null);
+  // Semesters whose stored data must not be overwritten because it has no backup
+  const saveBlocked = useRef<Record<SemesterType, boolean>>({ start: false, end: false });
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Separate state for each semester
@@ -28,6 +32,29 @@ export function useSemesterPersistence(
     setStorageError(`Storage error: ${error.message}`);
     console.error('Storage operation failed:', error);
   }, []);
+
+  // Keep the original before repaired or default data is saved over it
+  const backUpOriginal = (semester: SemesterType) => {
+    const key = `courseMatrix_${semester}Semester`;
+    const name = semester === 'start' ? 'Start of Semester' : 'End of Semester';
+    let message: string;
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return;
+      const backupKey = `${key}_backup_${Date.now()}`;
+      localStorage.setItem(backupKey, raw);
+      message = `Some saved ${name} data could not be read. The original was kept in browser storage as "${backupKey}".`;
+    } catch {
+      saveBlocked.current[semester] = true;
+      message = `Saved ${name} data could not be read or backed up. Changes to it will not be saved, to avoid overwriting it.`;
+    }
+    setLoadWarning(prev => prev ? `${prev} ${message}` : message);
+  };
+
+  // Statuses left by removed courses or renamed tasks are normal; anything else is lost data
+  const losesData = (validation: ValidationResult) =>
+    validation.errors.length > 0 ||
+    validation.warnings.some(warning => !warning.startsWith('Orphaned task status'));
 
   // Set up error callback
   useEffect(() => {
@@ -76,16 +103,14 @@ export function useSemesterPersistence(
           onError: handleStorageError
         });
 
+        if (!startDataResult.success) backUpOriginal('start');
         if (startDataResult.success && startDataResult.data) {
           try {
             // Validate and fix the data
             const validation = validateSemesterData(startDataResult.data, defaultStartTasks);
             
-            if (validation.warnings.length > 0) {
-              console.warn('Start semester data issues fixed:', validation.warnings);
-              setStorageError(`Data issues were automatically fixed: ${validation.warnings.length} warnings`);
-            }
-            
+            if (losesData(validation)) backUpOriginal('start');
+
             if (validation.isValid || validation.fixedData) {
               const fixedData = validation.fixedData as SemesterData;
               setStartCourses(fixedData.courses);
@@ -96,7 +121,7 @@ export function useSemesterPersistence(
             }
           } catch (error) {
             console.error('Failed to validate start semester data:', error);
-            setStorageError('Start semester data was corrupted and has been reset');
+            backUpOriginal('start');
             // Use defaults
             setStartCourses([]);
             setStartTasks(defaultStartTasks);
@@ -115,18 +140,14 @@ export function useSemesterPersistence(
           onError: handleStorageError
         });
 
+        if (!endDataResult.success) backUpOriginal('end');
         if (endDataResult.success && endDataResult.data) {
           try {
             // Validate and fix the data
             const validation = validateSemesterData(endDataResult.data, defaultEndTasks);
             
-            if (validation.warnings.length > 0) {
-              console.warn('End semester data issues fixed:', validation.warnings);
-              if (!storageError) { // Don't override existing errors
-                setStorageError(`Data issues were automatically fixed: ${validation.warnings.length} warnings`);
-              }
-            }
-            
+            if (losesData(validation)) backUpOriginal('end');
+
             if (validation.isValid || validation.fixedData) {
               const fixedData = validation.fixedData as SemesterData;
               setEndCourses(fixedData.courses);
@@ -137,7 +158,7 @@ export function useSemesterPersistence(
             }
           } catch (error) {
             console.error('Failed to validate end semester data:', error);
-            setStorageError('End semester data was corrupted and has been reset');
+            backUpOriginal('end');
             // Use defaults
             setEndCourses([]);
             setEndTasks(defaultEndTasks);
@@ -152,6 +173,8 @@ export function useSemesterPersistence(
 
       } catch (error) {
         const err = error as Error;
+        saveBlocked.current = { start: true, end: true };
+        setLoadWarning('Saved data could not be loaded. Changes will not be saved, to avoid overwriting it.');
         handleStorageError(err);
         console.warn('Failed to load data, using defaults:', err.message);
       } finally {
@@ -187,6 +210,7 @@ export function useSemesterPersistence(
   // Save start semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
+      if (saveBlocked.current.start) return;
       const saveStartData = async () => {
         const startData: SemesterData = {
           courses: startCourses,
@@ -213,6 +237,7 @@ export function useSemesterPersistence(
   // Save end semester data when it changes
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
+      if (saveBlocked.current.end) return;
       const saveEndData = async () => {
         const endData: SemesterData = {
           courses: endCourses,
@@ -312,6 +337,8 @@ export function useSemesterPersistence(
     // New state for error handling and loading
     isLoading,
     storageError,
+    loadWarning,
+    clearLoadWarning: () => setLoadWarning(null),
     lastSaved,
     clearStorageError: () => setStorageError(null),
   };

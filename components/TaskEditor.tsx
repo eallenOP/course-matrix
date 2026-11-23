@@ -18,7 +18,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   const [newSubtasks, setNewSubtasks] = useState<{ [taskType: string]: string }>({});
   const [draggedSubtask, setDraggedSubtask] = useState<string | null>(null);
   const [draggedTaskType, setDraggedTaskType] = useState<string | null>(null);
-  const [previousTasks, setPreviousTasks] = useState<Tasks | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [editingTaskType, setEditingTaskType] = useState<string | null>(null);
   const [editingSubtask, setEditingSubtask] = useState<{ taskType: string; subtask: string } | null>(null);
   const [editTaskTypeValue, setEditTaskTypeValue] = useState<string>('');
@@ -66,18 +66,19 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   };
 
   const addTaskType = () => {
-    if (newTaskType) {
+    const name = newTaskType.trim();
+    if (name && !hasTaskType(name)) {
       updateTasks({
         ...tasks,
-        [newTaskType]: []
+        [name]: []
       });
       setNewTaskType('');
     }
   };
 
   const addSubtask = (taskType: string) => {
-    const subtaskValue = newSubtasks[taskType] || '';
-    if (subtaskValue) {
+    const subtaskValue = (newSubtasks[taskType] || '').trim();
+    if (subtaskValue && !hasSubtask(taskType, subtaskValue)) {
       updateTasks({
         ...tasks,
         [taskType]: [...tasks[taskType], subtaskValue]
@@ -90,6 +91,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   };
 
   const removeTaskType = (taskType: string) => {
+    if (!window.confirm(`Remove "${taskType}" and all its subtasks?`)) return;
     const { [taskType]: removed, ...rest } = tasks;
     updateTasks(rest);
   };
@@ -102,20 +104,26 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   };
 
   const updateTasks = (newTasks: Tasks) => {
-    setPreviousTasks(null); // Clear undo state on manual changes
+    setNameError(null);
     onTasksChange(newTasks);
   };
 
-  const resetToDefault = () => {
-    setPreviousTasks({ ...tasks }); // Save current state for undo
-    onTasksChange(defaultTasks);
+  const hasTaskType = (name: string) => {
+    if (!Object.keys(tasks).includes(name)) return false;
+    setNameError(`Task type "${name}" already exists`);
+    return true;
   };
 
-  const undoReset = () => {
-    if (previousTasks) {
-      onTasksChange(previousTasks);
-      setPreviousTasks(null); // Clear undo state
-    }
+  // Case-insensitive, matching how duplicates are dropped when saved data is loaded
+  const hasSubtask = (taskType: string, name: string, except?: string) => {
+    if (!tasks[taskType].some(s => s !== except && s.toLowerCase() === name.toLowerCase())) return false;
+    setNameError(`"${name}" already exists in ${taskType}`);
+    return true;
+  };
+
+  const resetToDefault = () => {
+    if (!window.confirm('Replace these tasks with the defaults? Your changes to this list will be lost.')) return;
+    updateTasks(defaultTasks);
   };
 
   const startEditingTaskType = (taskType: string) => {
@@ -129,7 +137,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   };
 
   const saveTaskTypeEdit = () => {
-    if (editingTaskType && editTaskTypeValue.trim() && editTaskTypeValue !== editingTaskType) {
+    if (editingTaskType && editTaskTypeValue.trim() && editTaskTypeValue.trim() !== editingTaskType && !hasTaskType(editTaskTypeValue.trim())) {
       const newTaskTypeName = editTaskTypeValue.trim();
       const subtasks = tasks[editingTaskType];
       
@@ -153,7 +161,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
   };
 
   const saveSubtaskEdit = () => {
-    if (editingSubtask && editSubtaskValue.trim() && editSubtaskValue !== editingSubtask.subtask) {
+    if (editingSubtask && editSubtaskValue.trim() && editSubtaskValue.trim() !== editingSubtask.subtask &&
+        !hasSubtask(editingSubtask.taskType, editSubtaskValue.trim(), editingSubtask.subtask)) {
       const { taskType, subtask } = editingSubtask;
       const updatedSubtasks = tasks[taskType].map(s => 
         s === subtask ? editSubtaskValue.trim() : s
@@ -200,24 +209,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Edit Tasks</h2>
-          <div className="flex gap-2">
-            {previousTasks && (
-              <Button
-                variant="outline"
-                onClick={undoReset}
-                title="Undo reset to restore previous tasks"
-              >
-                Undo Reset
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={resetToDefault}
-              title="Reset tasks to default tasks"
-            >
-              Reset to Default
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={resetToDefault}
+            title="Replace this list with the default tasks"
+          >
+            Reset to Default
+          </Button>
         </div>
 
         {/* Add new task type */}
@@ -227,11 +225,18 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ tasks, onTasksChange, isVisible
             placeholder="New Task Type"
             className="border p-2 rounded flex-grow"
             value={newTaskType}
-            onChange={(e) => setNewTaskType(e.target.value)}
+            onChange={(e) => {
+              setNewTaskType(e.target.value);
+              setNameError(null);
+            }}
             onKeyDown={handleTaskTypeKeyPress}
           />
           <Button onClick={addTaskType}>Add Task Type</Button>
         </div>
+
+        {nameError && (
+          <p role="alert" className="-mt-4 mb-6 text-sm text-destructive">{nameError}</p>
+        )}
 
         {/* Edit existing tasks */}
         <div className="space-y-4">

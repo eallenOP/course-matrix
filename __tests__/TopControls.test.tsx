@@ -1,15 +1,16 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TopControls from '../components/TopControls';
 
 // Mock the UI components
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, variant, className }: any) => (
+  Button: ({ children, onClick, variant, className, disabled }: any) => (
     <button 
       onClick={onClick} 
       className={className}
       data-variant={variant}
+      disabled={disabled}
     >
       {children}
     </button>
@@ -22,7 +23,8 @@ jest.mock('lucide-react', () => ({
   Settings: () => <span data-testid="settings-icon">⚙</span>,
   Copy: () => <span data-testid="copy-icon">📋</span>,
   Check: () => <span data-testid="check-icon">✓</span>,
-  Download: () => <span data-testid="download-icon">⬇</span>
+  Download: () => <span data-testid="download-icon">⬇</span>,
+  Upload: () => <span data-testid="upload-icon">⬆</span>
 }));
 
 describe('TopControls', () => {
@@ -32,7 +34,8 @@ describe('TopControls', () => {
     onAddCourse: jest.fn(),
     isEditingTasks: false,
     onToggleEditTasks: jest.fn(),
-    onResetProgress: jest.fn(),
+    onStartFresh: jest.fn(),
+    onImportTasks: jest.fn(),
     activeSemester: 'start' as const,
     currentSemesterCourseCount: 0,
     otherSemesterCourseCount: 0,
@@ -54,7 +57,7 @@ describe('TopControls', () => {
     expect(screen.getByText('Add Course')).toBeInTheDocument();
     expect(screen.getByText('Download Tasks')).toBeInTheDocument();
     expect(screen.getByText('Edit Tasks')).toBeInTheDocument();
-    expect(screen.getByText('Reset Progress')).toBeInTheDocument();
+    expect(screen.getByText('Start fresh')).toBeInTheDocument();
   });
 
   it('should display the current course code value', () => {
@@ -103,13 +106,56 @@ describe('TopControls', () => {
     expect(defaultProps.onToggleEditTasks).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onResetProgress when reset button is clicked', () => {
-    render(<TopControls {...defaultProps} />);
-    
-    const resetButton = screen.getByText('Reset Progress');
-    fireEvent.click(resetButton);
-    
-    expect(defaultProps.onResetProgress).toHaveBeenCalledTimes(1);
+  it.each([['Keep courses', true], ['Clear courses too', false]])(
+    'starts fresh with "%s"', (label, keepCourses) => {
+      render(<TopControls {...defaultProps} currentSemesterCourseCount={2} />);
+      fireEvent.click(screen.getByText('Start fresh'));
+      expect(defaultProps.onStartFresh).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByText(label));
+      expect(defaultProps.onStartFresh).toHaveBeenCalledWith(keepCourses);
+      expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+    }
+  );
+
+  it('does nothing when starting fresh is cancelled', () => {
+    render(<TopControls {...defaultProps} currentSemesterCourseCount={2} />);
+    fireEvent.click(screen.getByText('Start fresh'));
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(defaultProps.onStartFresh).not.toHaveBeenCalled();
+    expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+  });
+
+  describe('import', () => {
+    const importFile = (content: string) => fireEvent.change(
+      screen.getByTestId('import-tasks-input'),
+      { target: { files: [new File([content], 'tasks.json')] } }
+    );
+    afterEach(() => jest.restoreAllMocks());
+
+    it('replaces tasks after confirmation, dropping duplicate subtasks', async () => {
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+      render(<TopControls {...defaultProps} />);
+      importFile('{"Moodle":["a","a","b"]}');
+      await waitFor(() => expect(defaultProps.onImportTasks).toHaveBeenCalledWith({ Moodle: ['a', 'b'] }));
+      expect(confirmSpy.mock.calls[0][0]).toContain('Start of Semester');
+    });
+
+    it('keeps tasks when not confirmed', async () => {
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+      render(<TopControls {...defaultProps} />);
+      importFile('{"Moodle":["a"]}');
+      await waitFor(() => expect(confirmSpy).toHaveBeenCalled());
+      expect(defaultProps.onImportTasks).not.toHaveBeenCalled();
+    });
+
+    it.each(['{broken', '[]', '{}', 'null', '{"Moodle":"a"}', '{"Moodle":[1]}'])(
+      'rejects an invalid file (%s)', async (content) => {
+        render(<TopControls {...defaultProps} />);
+        importFile(content);
+        expect(await screen.findByRole('alert')).toHaveTextContent('not a task list');
+        expect(defaultProps.onImportTasks).not.toHaveBeenCalled();
+      }
+    );
   });
 
   it('should render icons correctly', () => {
@@ -125,7 +171,7 @@ describe('TopControls', () => {
     render(<TopControls {...defaultProps} />);
     
     const editButton = screen.getByText('Edit Tasks').closest('button');
-    const resetButton = screen.getByText('Reset Progress').closest('button');
+    const resetButton = screen.getByText('Start fresh').closest('button');
     
     expect(editButton).toHaveAttribute('data-variant', 'outline');
     expect(resetButton).toHaveAttribute('data-variant', 'destructive');

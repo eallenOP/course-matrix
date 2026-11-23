@@ -82,8 +82,7 @@ jest.mock('../components/TopControls', () => {
     onNewCourseCodeChange, 
     onAddCourse, 
     isEditingTasks,
-    onToggleEditTasks,
-    onResetProgress 
+    onToggleEditTasks
   }: any) {
     return (
       <div data-testid="top-controls">
@@ -98,9 +97,6 @@ jest.mock('../components/TopControls', () => {
         </button>
         <button onClick={onToggleEditTasks} data-testid="toggle-edit">
           {isEditingTasks ? 'Done Editing' : 'Edit Tasks'}
-        </button>
-        <button onClick={onResetProgress} data-testid="reset-progress">
-          Reset Progress
         </button>
       </div>
     );
@@ -119,21 +115,6 @@ jest.mock('../components/ThemeToggle', () => {
   };
 });
 
-// Mock the localStorage hook
-jest.mock('../hooks/useLocalStoragePersistence', () => ({
-  useCourseMatrixPersistence: () => ({
-    courses: [],
-    tasks: {
-      'Course Directive': ['Task 1', 'Task 2'],
-      'Moodle': ['Task A', 'Task B']
-    },
-    taskStatus: {},
-    setCourses: jest.fn(),
-    setTasks: jest.fn(),
-    setTaskStatus: jest.fn()
-  })
-}));
-
 // Mock progress calculations
 jest.mock('../utils/progressCalculations', () => ({
   progressCalculations: {
@@ -141,11 +122,6 @@ jest.mock('../utils/progressCalculations', () => ({
     calculateCourseTaskProgress: jest.fn(() => 75),
     calculateCourseProgress: jest.fn(() => 60)
   }
-}));
-
-// Mock task actions
-jest.mock('../utils/taskActions', () => ({
-  resetTaskStatuses: jest.fn()
 }));
 
 describe('CourseMatrix Integration', () => {
@@ -192,17 +168,6 @@ describe('CourseMatrix Integration', () => {
     // Should now show task editor and "Done Editing"
     expect(screen.getByTestId('task-editor')).toBeInTheDocument();
     expect(toggleButton).toHaveTextContent('Done Editing');
-  });
-
-  it('should handle reset progress action', () => {
-    const { resetTaskStatuses } = require('../utils/taskActions');
-    
-    renderCourseMatrix();
-    
-    const resetButton = screen.getByTestId('reset-progress');
-    fireEvent.click(resetButton);
-    
-    expect(resetTaskStatuses).toHaveBeenCalledTimes(1);
   });
 
   it('should pass correct props to child components', () => {

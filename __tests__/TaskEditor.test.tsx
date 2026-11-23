@@ -130,6 +130,8 @@ describe('TaskEditor', () => {
       />
     );
 
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+
     // Find and click the remove button for the first task type
     const removeButtons = screen.getAllByRole('button', { name: /remove/i });
     await user.click(removeButtons[0]);
@@ -139,6 +141,7 @@ describe('TaskEditor', () => {
     const { 'Course Setup': removed, ...remainingTasks } = expectedTasks;
     
     expect(mockOnTasksChange).toHaveBeenCalledWith(remainingTasks);
+    confirmSpy.mockRestore();
   });
 
   it('should remove a subtask when its remove button is clicked', async () => {
@@ -613,6 +616,67 @@ describe('TaskEditor', () => {
       const lastCall = mockOnTasksChange.mock.calls[mockOnTasksChange.mock.calls.length - 1][0];
       const taskTypeKeys = Object.keys(lastCall);
       expect(taskTypeKeys).toEqual(['Updated Course Setup', 'Grading']);
+    });
+  });
+
+  describe('Protecting existing tasks', () => {
+    const renderEditor = (defaultTasks: Record<string, string[]> = mockTasks) => render(
+      <TaskEditor tasks={mockTasks} onTasksChange={mockOnTasksChange} isVisible={true} defaultTasks={defaultTasks} />
+    );
+    const enter = (input: HTMLElement, value: string) => {
+      fireEvent.change(input, { target: { value } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+    };
+    const expectRejected = () => {
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert').textContent).toContain('already exists');
+    };
+    afterEach(() => jest.restoreAllMocks());
+
+    it('keeps a task type when removal is not confirmed', () => {
+      jest.spyOn(window, 'confirm').mockReturnValue(false);
+      renderEditor();
+      fireEvent.click(screen.getAllByRole('button', { name: /remove/i })[0]);
+      expect(mockOnTasksChange).not.toHaveBeenCalled();
+    });
+
+    it.each([[true, 1], [false, 0]])('resets to defaults only when confirmed (%p)', (confirmed, calls) => {
+      jest.spyOn(window, 'confirm').mockReturnValue(confirmed);
+      renderEditor({ Default: ['a'] });
+      fireEvent.click(screen.getByText('Reset to Default'));
+      expect(mockOnTasksChange).toHaveBeenCalledTimes(calls);
+    });
+
+    it.each(['Grading', '  Grading '])('does not add an existing task type (%p)', (name) => {
+      renderEditor();
+      enter(screen.getByPlaceholderText('New Task Type'), name);
+      expectRejected();
+    });
+
+    it('does not rename a task type over another', () => {
+      renderEditor();
+      fireEvent.click(screen.getByText('Course Setup'));
+      enter(screen.getByDisplayValue('Course Setup'), 'Grading');
+      expectRejected();
+      expect(screen.getByText('Course Setup')).toBeTruthy();
+    });
+
+    it('does not add or rename to a duplicate subtask, ignoring case', () => {
+      renderEditor();
+      enter(screen.getAllByPlaceholderText('New Subtask')[0], 'setup moodle');
+      expectRejected();
+      fireEvent.click(screen.getByText('Create syllabus'));
+      enter(screen.getByDisplayValue('Create syllabus'), 'Setup Moodle');
+      expectRejected();
+    });
+
+    it('allows changing only the case of a subtask', () => {
+      renderEditor();
+      fireEvent.click(screen.getByText('Create syllabus'));
+      enter(screen.getByDisplayValue('Create syllabus'), 'Create Syllabus');
+      expect(mockOnTasksChange).toHaveBeenCalledWith(
+        expect.objectContaining({ 'Course Setup': ['Create Syllabus', 'Setup Moodle'] })
+      );
     });
   });
 });
